@@ -12,13 +12,15 @@ func AppRoot() (string, error) {
 	}
 
 	exeDir := filepath.Dir(exePath)
-	if isProjectRoot(exeDir) || isRuntimeRoot(exeDir) {
-		return exeDir, nil
+	if root, ok := findAppRoot(exeDir); ok {
+		return root, nil
 	}
 
 	cwd, err := os.Getwd()
-	if err == nil && (isProjectRoot(cwd) || isRuntimeRoot(cwd)) {
-		return cwd, nil
+	if err == nil {
+		if root, ok := findAppRoot(cwd); ok {
+			return root, nil
+		}
 	}
 
 	return exeDir, nil
@@ -104,6 +106,23 @@ func isProjectRoot(root string) bool {
 func isRuntimeRoot(root string) bool {
 	return fileExists(filepath.Join(root, "resources", "runtime")) ||
 		fileExists(filepath.Join(root, "runtime.version.json"))
+}
+
+func findAppRoot(start string) (string, bool) {
+	current := filepath.Clean(start)
+	for depth := 0; depth < 6; depth++ {
+		if isProjectRoot(current) || isRuntimeRoot(current) {
+			return current, true
+		}
+
+		parent := filepath.Dir(current)
+		if parent == current {
+			break
+		}
+		current = parent
+	}
+
+	return "", false
 }
 
 func fileExists(path string) bool {

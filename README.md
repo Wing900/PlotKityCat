@@ -51,7 +51,7 @@ PlotKityCat 支持优盘便携，旨在让老师将其带入教室、讲台及�
 
 - **前端**: Vue 3, TypeScript, Vite
 - **后端**: Go, Wails Framework
-- **运行时**: WinPython (Matplotlib, NumPy, PyQt5)
+- **运行时**: Python runtime (Matplotlib, NumPy, SciPy, PyQt5)
 - **AI 接口**: OpenAI API / 自定义兼容接口
 
 ## 快速开始
@@ -63,7 +63,7 @@ PlotKityCat 支持优盘便携，旨在让老师将其带入教室、讲台及�
 ## 开发者指南
 
 ### 环境要求
-- **Windows**
+- **Windows / macOS**
 - **Go**: 1.21+
 - **Node.js**: 18+
 - **Wails**: v2.x
@@ -97,10 +97,16 @@ wails dev
 - `resources/runtime/runtime.zip` 默认不提交到 Git
 - 这个文件应作为 release asset 或外部制品分发
 
-准备 runtime 压缩包：
+准备 Windows runtime 压缩包：
 
 ```powershell
 .\tools\prepare-runtime.ps1 -SourceRuntimeDir <你的 runtime 目录>
+```
+
+准备 macOS arm64 runtime 压缩包：
+
+```bash
+./tools/prepare-runtime-macos.sh
 ```
 
 当前默认核心库：
@@ -115,16 +121,28 @@ wails dev
 
 ### 打包入口
 
-构建 exe：
+构建 Windows exe：
 
 ```powershell
 .\tools\build-versioned-app.ps1
 ```
 
-生成发布 zip：
+构建 macOS app：
+
+```bash
+./tools/build-versioned-app.sh
+```
+
+生成 Windows 发布 zip：
 
 ```powershell
 .\tools\package-release.ps1
+```
+
+生成 macOS 发布 zip：
+
+```bash
+./tools/package-release-macos.sh
 ```
 
 生成自动更新发布物：

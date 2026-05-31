@@ -58,6 +58,19 @@ func (s *Service) Status() (Status, error) {
 }
 
 func (s *Service) Check(ctx context.Context, force bool) (Status, error) {
+	if runtime.GOOS != "windows" {
+		state, err := s.store.Load()
+		if err != nil {
+			return Status{}, err
+		}
+		status := s.statusFromState(state)
+		status.Message = "macOS 暂不支持在线更新，请下载完整发布包"
+		status.UpdateAvailable = false
+		status.Downloaded = false
+		status.ReadyToInstall = false
+		return status, nil
+	}
+
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -102,6 +115,10 @@ func (s *Service) Check(ctx context.Context, force bool) (Status, error) {
 }
 
 func (s *Service) Download(ctx context.Context) (Status, error) {
+	if runtime.GOOS != "windows" {
+		return Status{}, fmt.Errorf("macOS 暂不支持在线更新，请下载完整发布包")
+	}
+
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -200,6 +217,10 @@ func (s *Service) Download(ctx context.Context) (Status, error) {
 }
 
 func (s *Service) InstallAndRestart() error {
+	if runtime.GOOS != "windows" {
+		return fmt.Errorf("macOS 暂不支持在线更新，请下载完整发布包")
+	}
+
 	state, err := s.store.Load()
 	if err != nil {
 		return err

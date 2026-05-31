@@ -13,6 +13,7 @@ import (
 
 	"plotkitycat/internal/paths"
 	"plotkitycat/internal/processutil"
+	"plotkitycat/internal/pythonruntime"
 	"plotkitycat/internal/workspaces"
 )
 
@@ -187,31 +188,30 @@ func resolvePythonCommand() (string, []string, error) {
 		return "", nil, err
 	}
 
-	pythonPath := filepath.Join(runtimeDir, "python.exe")
-	if _, err := os.Stat(pythonPath); err == nil {
-		return pythonPath, nil, nil
+	for _, relativePath := range pythonruntime.PythonCandidates() {
+		pythonPath := filepath.Join(runtimeDir, relativePath)
+		if _, err := os.Stat(pythonPath); err == nil {
+			return pythonPath, nil, nil
+		}
 	}
 
-	pythonwPath := filepath.Join(runtimeDir, "pythonw.exe")
-	if _, err := os.Stat(pythonwPath); err == nil {
-		return pythonwPath, nil, nil
-	}
-
-	return "", nil, errors.New("python runtime not found; expected ./runtime/python.exe or ./runtime/pythonw.exe")
+	return "", nil, errors.New(pythonruntime.PythonNotFoundMessage())
 }
 
 func buildPythonEnv(runtimeDir string) []string {
 	env := append([]string{}, os.Environ()...)
-	qtRoot := filepath.Join(runtimeDir, "Lib", "site-packages", "PyQt5", "Qt5")
+	qtRoot := filepath.Join(runtimeDir, pythonruntime.PackageRelativePath("PyQt5"), "Qt5")
 	qtBinDir := filepath.Join(qtRoot, "bin")
 	qtPluginsDir := filepath.Join(qtRoot, "plugins")
 	qtPlatformsDir := filepath.Join(qtPluginsDir, "platforms")
+	runtimeLibDir := filepath.Join(runtimeDir, pythonruntime.SharedLibraryRelativeDir())
 
 	env = append(env,
 		"MPLBACKEND=Qt5Agg",
 		"QT_QPA_PLATFORM_PLUGIN_PATH="+qtPlatformsDir,
 		"QT_PLUGIN_PATH="+qtPluginsDir,
 		"PATH="+qtBinDir+string(os.PathListSeparator)+os.Getenv("PATH"),
+		"DYLD_LIBRARY_PATH="+runtimeLibDir+string(os.PathListSeparator)+os.Getenv("DYLD_LIBRARY_PATH"),
 	)
 
 	return env

@@ -40,7 +40,7 @@ const emit = defineEmits<{
 
         <div class="settings-runtime">
           <div class="settings-runtime-header">
-            <strong class="settings-runtime-title">WinPython 环境</strong>
+            <strong class="settings-runtime-title">Python Runtime 环境</strong>
             <span class="settings-runtime-version">当前版本 {{ update.currentVersion || "-" }}</span>
           </div>
           <p class="settings-runtime-summary">{{ status.summary }}</p>

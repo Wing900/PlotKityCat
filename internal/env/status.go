@@ -10,6 +10,7 @@ import (
 
 	"plotkitycat/internal/paths"
 	"plotkitycat/internal/processutil"
+	"plotkitycat/internal/pythonruntime"
 )
 
 type CheckItem struct {
@@ -53,7 +54,7 @@ func EvaluateStatus(requirements []Requirement) (Status, error) {
 
 	items := make([]CheckItem, 0, len(requirements))
 	missing := make([]string, 0)
-	pythonPath := filepath.Join(runtimeDir, "python.exe")
+	pythonPath := filepath.Join(runtimeDir, pythonruntime.PrimaryPythonRelativePath())
 	pythonExists := false
 
 	for _, requirement := range requirements {
@@ -95,20 +96,20 @@ func EvaluateStatus(requirements []Requirement) (Status, error) {
 	case !archiveExists && len(missing) > 0:
 		status.Code = "runtime_archive_missing"
 		status.Severity = "error"
-		status.Summary = "缺少 resources/runtime/runtime.zip，无法自动修复内置 WinPython"
+		status.Summary = pythonruntime.RuntimeMissingSummary()
 		status.RecommendedAction = "请补齐 resources/runtime/runtime.zip 后再重建 Runtime"
 	case !pythonExists:
 		status.Code = "python_executable_missing"
 		status.Severity = "error"
-		status.Summary = "WinPython 主程序缺失"
+		status.Summary = pythonruntime.PythonExecutableMissingSummary()
 		status.RecommendedAction = "可以执行重建 Runtime 修复"
 	case len(missing) > 0:
 		status.Code = "runtime_incomplete"
 		status.Severity = "error"
-		status.Summary = "WinPython 环境不完整"
+		status.Summary = pythonruntime.RuntimeIncompleteSummary()
 		status.RecommendedAction = "建议重建 Runtime 以补齐缺失组件"
 	default:
-		importItems, importMissing, importErr := evaluatePythonImports(pythonPath, requirements)
+		importItems, importMissing, importErr := evaluatePythonImports(runtimeDir, pythonPath, requirements)
 		status.Items = append(status.Items, importItems...)
 		status.Missing = append(status.Missing, importMissing...)
 
@@ -117,18 +118,18 @@ func EvaluateStatus(requirements []Requirement) (Status, error) {
 			status.Ready = false
 			status.Code = "python_runtime_broken"
 			status.Severity = "error"
-			status.Summary = "WinPython 可执行但导入自检失败"
+			status.Summary = pythonruntime.PythonImportFailedSummary()
 			status.RecommendedAction = "建议重建 Runtime；若仍失败，再检查打包内容"
 		case len(importMissing) > 0:
 			status.Ready = false
 			status.Code = "python_package_unhealthy"
 			status.Severity = "error"
-			status.Summary = "WinPython 已启动，但核心包导入失败"
+			status.Summary = pythonruntime.PythonPackageUnhealthySummary()
 			status.RecommendedAction = "建议重建 Runtime 以修复包依赖"
 		default:
 			status.Code = "ready"
 			status.Severity = "info"
-			status.Summary = "WinPython runtime ready"
+			status.Summary = pythonruntime.RuntimeReadySummary()
 			status.RecommendedAction = "无需处理"
 		}
 	}
@@ -136,7 +137,7 @@ func EvaluateStatus(requirements []Requirement) (Status, error) {
 	return status, nil
 }
 
-func evaluatePythonImports(pythonPath string, requirements []Requirement) ([]CheckItem, []string, error) {
+func evaluatePythonImports(runtimeDir string, pythonPath string, requirements []Requirement) ([]CheckItem, []string, error) {
 	modules := make([]Requirement, 0, len(requirements))
 	for _, requirement := range requirements {
 		if requirement.ImportName != "" {
@@ -149,6 +150,7 @@ func evaluatePythonImports(pythonPath string, requirements []Requirement) ([]Che
 
 	script := buildImportCheckScript(modules)
 	cmd := exec.Command(pythonPath, "-c", script)
+	cmd.Env = buildImportCheckEnv(runtimeDir)
 	cmd.SysProcAttr = processutil.WithoutConsoleWindow()
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
@@ -223,6 +225,13 @@ func buildImportCheckScript(requirements []Requirement) string {
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+func buildImportCheckEnv(runtimeDir string) []string {
+	env := append([]string{}, os.Environ()...)
+	runtimeLibDir := filepath.Join(runtimeDir, pythonruntime.SharedLibraryRelativeDir())
+	env = append(env, "DYLD_LIBRARY_PATH="+runtimeLibDir+string(os.PathListSeparator)+os.Getenv("DYLD_LIBRARY_PATH"))
+	return env
 }
 
 func mapCheckStatus(exists bool) string {

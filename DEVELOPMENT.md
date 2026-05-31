@@ -2,7 +2,7 @@
 
 ## 环境
 
-- Windows
+- Windows / macOS
 - Go 1.21+
 - Node.js 18+
 - Wails v2
@@ -45,10 +45,16 @@ wails dev
 - 该文件应通过 GitHub Release asset 或其他制品存储分发
 - 仓库仅跟踪 runtime 脚本、元数据和第三方补丁源码
 
-准备 runtime 压缩包：
+准备 Windows runtime 压缩包：
 
 ```powershell
 .\tools\prepare-runtime.ps1 -SourceRuntimeDir <你的 runtime 目录>
+```
+
+准备 macOS arm64 runtime 压缩包：
+
+```bash
+./tools/prepare-runtime-macos.sh
 ```
 
 当前默认应保留的核心库：
@@ -65,16 +71,28 @@ wails dev
 
 ## 打包入口
 
-构建 exe：
+构建 Windows exe：
 
 ```powershell
 .\tools\build-versioned-app.ps1
 ```
 
-生成发布 zip：
+构建 macOS app：
+
+```bash
+./tools/build-versioned-app.sh
+```
+
+生成 Windows 发布 zip：
 
 ```powershell
 .\tools\package-release.ps1
+```
+
+生成 macOS 发布 zip：
+
+```bash
+./tools/package-release-macos.sh
 ```
 
 生成自动更新发布物：
