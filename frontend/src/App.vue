@@ -16,6 +16,7 @@ import RuntimeLoadingScreen from "./components/RuntimeLoadingScreen.vue";
 import ScreeningDialog from "./components/ScreeningDialog.vue";
 import SettingsDialog from "./components/SettingsDialog.vue";
 import SidebarPanel from "./components/sidebar/SidebarPanel.vue";
+import StopAIConfirmDialog from "./components/StopAIConfirmDialog.vue";
 import TopBar from "./components/TopBar.vue";
 import UpdateRestartDialog from "./components/UpdateRestartDialog.vue";
 import { usePlotWorkspace } from "./features/plot/model/usePlotWorkspace";
@@ -25,6 +26,8 @@ const workspace = reactive(usePlotWorkspace());
 const theme = reactive(useTheme());
 const isSceneSwitching = ref(false);
 const isLoadingScreenVisible = ref(true);
+const isStopAIConfirmOpen = ref(false);
+const isStoppingAI = ref(false);
 
 let sceneSwitchTimer = 0;
 let hasMountedScene = false;
@@ -60,6 +63,30 @@ function handleLoadingScreenSettled() {
   if (!workspace.isInitializing) {
     isLoadingScreenVisible.value = false;
   }
+}
+
+function handleStopAI() {
+  // 按设计应弹 HIG 二次确认（停止有副作用——已进行的尝试会丢弃）
+  isStopAIConfirmOpen.value = true;
+}
+
+async function confirmStopAI() {
+  if (isStoppingAI.value) {
+    return;
+  }
+  isStoppingAI.value = true;
+  try {
+    await workspace.stopAIWorkflow();
+  } catch (error) {
+    console.warn("[stop-ai] 停止失败", error);
+  } finally {
+    isStoppingAI.value = false;
+    isStopAIConfirmOpen.value = false;
+  }
+}
+
+function cancelStopAI() {
+  isStopAIConfirmOpen.value = false;
 }
 
 onBeforeUnmount(() => {
@@ -154,6 +181,7 @@ onBeforeUnmount(() => {
             :is-running="workspace.isRunning"
             :ai-busy="workspace.isAIGenerating"
             :ai-label="workspace.aiStatusLabel"
+            @stop-ai="handleStopAI"
           />
         </section>
 
@@ -287,6 +315,13 @@ onBeforeUnmount(() => {
       :version="workspace.updateStatus.latestVersion"
       @close="workspace.closeUpdateInstallDialog"
       @confirm="workspace.installUpdateAndRestart"
+    />
+
+    <StopAIConfirmDialog
+      :open="isStopAIConfirmOpen"
+      :pending="isStoppingAI"
+      @cancel="cancelStopAI"
+      @confirm="confirmStopAI"
     />
   </div>
 </template>

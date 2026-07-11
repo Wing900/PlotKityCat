@@ -114,6 +114,10 @@ func (s *Service) run(ctx context.Context, request Request, sessionID string) {
 			LastFailure: lastFailure,
 		})
 		if buildErr != nil {
+			if ctx.Err() != nil {
+				s.markInterrupted(sessionID, request.SceneName, attempt, "已中断 AI 检查")
+				return
+			}
 			s.markFailure(sessionID, request.SceneName, attempt, normalizeBuildError(buildErr))
 			return
 		}

@@ -123,6 +123,20 @@
   letter-spacing: 0.04em;
 }
 
+.stop-ai-dialog {
+  width: min(38vw, 420px);
+  min-height: 0;
+}
+
+.stop-ai-message {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+}
+}
+
 .ai-settings-dialog {
   width: min(48vw, 560px);
   min-height: 0;

@@ -145,12 +145,9 @@ function createAIWorkflowHandlers(options: PlotAIWorkflowOptions) {
         },
       );
     },
-    onInterrupted: (event: { message: string; sceneName: string }) => {
-      options.runErrorDialog.openRunErrorDialog(
-        event.sceneName === options.scriptWorkspace.currentFile.value
-          ? event.message
-          : `[${event.sceneName}] ${event.message}`,
-      );
+    onInterrupted: () => {
+      // 中断是预期动作（用户点停止 / 会话被销毁），不再弹错误框
+      options.runErrorDialog.clearRunError();
     },
     onSucceeded: () => {
       options.runErrorDialog.clearRunError();

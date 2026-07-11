@@ -68,6 +68,50 @@
   color: color-mix(in srgb, var(--text), var(--muted) 34%);
 }
 
+/* AI 停止钮 · 紧凑次要按钮，圆角跟 run-button 一族（小圆角而非药丸） */
+.environment-stop-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  margin-left: auto;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: var(--fill-soft);
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.environment-stop-button:hover {
+  background: var(--fill-strong);
+  color: var(--text);
+}
+
+.environment-stop-button:not(:disabled):active {
+  transform: scale(0.94);
+  transition-duration: 60ms;
+}
+
+.environment-stop-button:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+
+.environment-stop-icon {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+}
+
 @keyframes environment-ai-breathe {
   0%,
   100% {
