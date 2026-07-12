@@ -1,8 +1,16 @@
-import { themeSeeds, type ThemeId, type ThemeSeed } from "./palettes";
+import { ATOM_KEYS, themeSeeds, type AtomKey, type ThemeId, type ThemeSeed } from "./palettes";
+import { oklchToHex, zeroErrorColor, DEFAULT_WEIGHTS, type OKLCH } from "./oklch";
 
 export type ThemeTokens = Record<string, string>;
 
-export type AppTheme = ThemeSeed & {
+/** 派生的 6 原子色（hex），由算法从 main/ink 端点生成 */
+export type ThemeAtoms = Record<AtomKey, string>;
+
+export type AppTheme = {
+  id: ThemeId;
+  label: string;
+  dark: boolean;
+  atoms: ThemeAtoms;
   tokens: ThemeTokens;
 };
 
@@ -12,17 +20,29 @@ export function getTheme(themeId: ThemeId) {
   return appThemes.find((theme) => theme.id === themeId) ?? appThemes[0];
 }
 
+/* color-mix 字符串助手：保留透明叠加语义 */
 function mix(base: string, tint: string, amount: number) {
   return "color-mix(in srgb, " + base + ", " + tint + " " + amount + "%)";
 }
 
-/** 墨色的透明淡化：wash(6) = 6% 浓度的墨 */
 function wash(ink: string, amount: number) {
   return "color-mix(in srgb, " + ink + ", transparent " + (100 - amount) + "%)";
 }
 
+/** 从 main/ink 两端点 + 零误差权重，精确生成 6 原子色 hex */
+function generateAtoms(seed: ThemeSeed): ThemeAtoms {
+  const atoms = {} as ThemeAtoms;
+  ATOM_KEYS.forEach((key, i) => {
+    const ok: OKLCH = zeroErrorColor(i, seed.main, seed.ink, seed.weights ?? DEFAULT_WEIGHTS);
+    atoms[key] = oklchToHex(ok);
+  });
+  return atoms;
+}
+
 function createTheme(seed: ThemeSeed): AppTheme {
-  const { ink, smoke, accent, dark } = seed;
+  const atoms = generateAtoms(seed);
+  const { main, bg, sidebar, accent, smoke, ink } = atoms;
+  const { dark } = seed;
 
   /* 层次手法：无边框 · 深浅填充分区 + 弥散影托层 */
   const shadowInk = dark ? "rgba(0, 0, 0" : "rgba(52, 44, 30";
@@ -32,13 +52,13 @@ function createTheme(seed: ThemeSeed): AppTheme {
   const shadow4 = "0 24px 64px " + shadowInk + (dark ? ", 0.52)" : ", 0.18)");
 
   const tokens: ThemeTokens = {
-    "--app-bg": seed.bg,
-    "--sidebar-bg": seed.sidebar,
-    "--notebook-bg": seed.main,
-    "--workspace-bg": seed.main,
-    "--surface": seed.main,
-    "--surface-soft": dark ? mix(seed.main, "white", 3) : mix(seed.main, seed.bg, 55),
-    "--surface-raised": dark ? mix(seed.main, "white", 6) : seed.main,
+    "--app-bg": bg,
+    "--sidebar-bg": sidebar,
+    "--notebook-bg": main,
+    "--workspace-bg": main,
+    "--surface": main,
+    "--surface-soft": dark ? mix(main, "white", 3) : mix(main, bg, 55),
+    "--surface-raised": dark ? mix(main, "white", 6) : main,
     "--surface-hover": wash(ink, 6),
     "--toolbar-control": "transparent",
     "--glass-line": accent,
@@ -46,7 +66,7 @@ function createTheme(seed: ThemeSeed): AppTheme {
     "--text": ink,
     "--text-soft": mix(ink, smoke, 42),
     "--muted": smoke,
-    "--subtle": mix(smoke, seed.bg, 38),
+    "--subtle": mix(smoke, bg, 38),
 
     "--line": accent,
     "--line-strong": dark ? mix(accent, ink, 16) : mix(accent, ink, 14),
@@ -60,7 +80,7 @@ function createTheme(seed: ThemeSeed): AppTheme {
     "--run-ink": ink,
 
     "--focus": wash(ink, 30),
-    "--body-wash": seed.bg,
+    "--body-wash": bg,
 
     /* 深浅分层 · 无边框时代的骨架 */
     "--hover-fill": wash(ink, dark ? 9 : 6),
@@ -71,8 +91,8 @@ function createTheme(seed: ThemeSeed): AppTheme {
     "--file-icon-bg": "transparent",
     "--file-icon-text": smoke,
 
-    "--dialog-bg": dark ? mix(seed.main, "white", 2) : seed.main,
-    "--dialog-input-surface": dark ? mix(seed.sidebar, "black", 16) : mix(seed.main, seed.bg, 55),
+    "--dialog-bg": dark ? mix(main, "white", 2) : main,
+    "--dialog-input-surface": dark ? mix(sidebar, "black", 16) : mix(main, bg, 55),
     "--dialog-input-bg": wash(ink, dark ? 6 : 4.5),
     "--dialog-input-focus": wash(ink, dark ? 9 : 7),
     "--dialog-shadow": dark ? "rgba(0, 0, 0, 0.44)" : "rgba(52, 44, 30, 0.16)",
@@ -93,13 +113,16 @@ function createTheme(seed: ThemeSeed): AppTheme {
     "--syntax-builtin": dark ? "#a3ba8b" : "#52684a",
     "--syntax-string": dark ? "#c2b475" : "#6f6a42",
     "--syntax-number": dark ? "#c79c85" : "#8a6a56",
-    "--syntax-comment": mix(smoke, seed.bg, 16),
+    "--syntax-comment": mix(smoke, bg, 16),
     "--syntax-decorator": dark ? "#9db5b5" : "#647171",
     "--syntax-operator": mix(smoke, ink, 22),
   };
 
   return {
-    ...seed,
+    id: seed.id,
+    label: seed.label,
+    dark: seed.dark,
+    atoms,
     tokens,
   };
 }
