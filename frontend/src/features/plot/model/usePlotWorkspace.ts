@@ -16,8 +16,6 @@ import type {
 } from "../../ai/services/aiTypes";
 import { useRunErrorDialog } from "../../errors/model/useRunErrorDialog";
 import { useDesignCardWorkspace } from "../../designCard/model/useDesignCardWorkspace";
-import { extractDesignCardReferenceIDs } from "../../designCard/services/designCardMarkdownCodec";
-import type { DesignCardDragSource } from "../../designCard/services/designCardDragData";
 import type { DesignCard } from "../../designCard/services/designCardTypes";
 import { useNoteWorkspace } from "../../notebook/model/useNoteWorkspace";
 import { createRuntimeRepository } from "../../runtime/services/runtimeRepository";
@@ -121,10 +119,14 @@ export function usePlotWorkspace() {
   const designCardWorkspace = useDesignCardWorkspace({
     aiActivity,
     aiSettings,
-    codeContent: scriptWorkspace.codeContent,
     currentFile: scriptWorkspace.currentFile,
     isRunning,
-    noteMarkdown: computed(() => noteWorkspace.currentDocument.value.markdown),
+    insertNoteReference: (cardId) => {
+      noteWorkspace.insertDesignCardReference({
+        cardId,
+        persist: "immediate",
+      });
+    },
     onError: runErrorDialog.openRunErrorDialog,
   });
   const packageTransfer = usePackageTransfer({
@@ -146,48 +148,14 @@ export function usePlotWorkspace() {
       ...payload,
       persist: "immediate",
     });
-    if (payload.source === "editor") {
-      designCardWorkspace.removeCardPlacement(payload.cardId);
-    }
-  }
-
-  function placeDesignCard(payload: {
-    cardId: string;
-    afterLine: number;
-    source: DesignCardDragSource;
-  }) {
-    designCardWorkspace.setCardPlacement(payload.cardId, payload.afterLine);
-    if (payload.source === "note") {
-      noteWorkspace.removeDesignCardReference({
-        cardId: payload.cardId,
-        persist: "immediate",
-      });
-    }
   }
 
   async function deleteDesignCardFromNote(cardId: string) {
-    const hasCodePlacement = designCardWorkspace.placements.value.some(
-      (placement) => placement.cardId === cardId,
-    );
     noteWorkspace.removeDesignCardReference({
       cardId,
       persist: "immediate",
     });
-    if (!hasCodePlacement) {
-      await designCardWorkspace.deleteCard(cardId);
-    }
-  }
-
-  async function deleteDesignCardFromCode(cardId: string) {
-    const stillReferencedInNote = extractDesignCardReferenceIDs(
-      noteWorkspace.currentDocument.value.markdown,
-    ).includes(cardId);
-    if (!stillReferencedInNote) {
-      await designCardWorkspace.deleteCard(cardId);
-      return;
-    }
-
-    designCardWorkspace.removeCardPlacement(cardId);
+    await designCardWorkspace.deleteCard(cardId);
   }
 
   const lifecycle = useWorkspaceLifecycle({
@@ -464,10 +432,8 @@ export function usePlotWorkspace() {
 
   return {
     aiSettings,
-    aiStatusLabel: aiActivity.aiStatusLabel,
     codeContent: scriptWorkspace.codeContent,
     designCards: designCardWorkspace.cards,
-    designCardPlacements: designCardWorkspace.placements,
     designCardReviewCard: designCardWorkspace.activeCard,
     designCardReviewSaveState: designCardWorkspace.saveState,
     closeAISettings,
@@ -507,11 +473,13 @@ export function usePlotWorkspace() {
     addNoteImages: noteWorkspace.addImages,
     generateCodeFromNoteSelection: plotAIWorkflow.aiGeneration.generateCodeFromNoteSelection,
     generateDesignFromNoteSelection: designCardWorkspace.generateFromNoteSelection,
+    stopDesigning: designCardWorkspace.stopDesigning,
     goToNextScreeningPage: screeningWorkspace.goToNextScreeningPage,
     hasNoteContent: noteWorkspace.hasContent,
     initProgressMessage: runtime.initProgressMessage,
     initProgressPercent: runtime.initProgressPercent,
     isAIGenerating: aiActivity.isAIGenerating,
+    isDesigning: designCardWorkspace.isDesigning,
     isAISettingsDialogOpen,
     isCodeAIOptimizeDialogOpen: plotAIWorkflow.codeAIOptimize.isDialogOpen,
     isDesignCardOptimizeDialogOpen: designCardWorkspace.isOptimizeDialogOpen,
@@ -563,8 +531,6 @@ export function usePlotWorkspace() {
     moveNoteImage: noteWorkspace.moveImage,
     removeNoteImage: noteWorkspace.removeImage,
     insertDesignCardReferenceIntoNote,
-    placeDesignCard,
-    deleteDesignCard: deleteDesignCardFromCode,
     deleteDesignCardFromNote,
     rebuildRuntime: lifecycle.rebuildRuntime,
     repairAnimationKey,
@@ -596,9 +562,6 @@ export function usePlotWorkspace() {
     submitDesignCardOptimize: designCardWorkspace.submitOptimization,
     closeDesignCardOptimizeDialog: designCardWorkspace.closeOptimizeDialog,
     closeDesignCardReviewRoom: designCardWorkspace.closeReviewRoom,
-    moveDesignCard: designCardWorkspace.moveCard,
-    setDesignCardPlacement: designCardWorkspace.setCardPlacement,
-    setDesignCardAnchorLine: designCardWorkspace.setEditorAnchorLine,
     updateDesignCardPlan: designCardWorkspace.updateActivePlan,
     updateNoteMarkdown: noteWorkspace.updateMarkdown,
     workspaces: scriptWorkspace.workspaces,

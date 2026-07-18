@@ -14,18 +14,20 @@
   padding: 0;
   border: 0;
   background: transparent;
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-2);
   cursor: grab;
   animation: design-card-float-in 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
   transition:
     opacity 160ms ease,
     transform 180ms ease,
     filter 180ms ease,
-    box-shadow 180ms ease;
+    box-shadow 180ms ease,
+    border-radius 180ms ease;
 }
 
 .notebook-design-card-block:hover {
-  box-shadow: var(--shadow-2);
-  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-3);
 }
 
 .notebook-design-card-selection-text {
@@ -81,6 +83,7 @@
   min-height: 0;
   overflow: hidden;
   background: transparent;
+  border-radius: var(--radius-xs);
 }
 
 .design-card-static-svg-view svg,

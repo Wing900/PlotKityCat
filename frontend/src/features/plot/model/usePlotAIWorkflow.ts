@@ -6,7 +6,6 @@ import { useCodeAIOptimize } from "../../codeAIOptimize/model/useCodeAIOptimize"
 import { useAINoteGeneration } from "./useAINoteGeneration";
 
 type AIActivityStatus = {
-  aiStatusLabel: Ref<string>;
   isAIGenerating: Ref<boolean>;
   startChecking: () => void;
   startWorking: () => void;

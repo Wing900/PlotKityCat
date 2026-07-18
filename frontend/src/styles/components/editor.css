@@ -9,12 +9,7 @@
 }
 
 .editor-panel.disabled {
-  cursor: progress;
-  opacity: 0.92;
-}
-
-.editor-panel.dragging-design-card {
-  background: color-mix(in srgb, var(--workspace-bg), var(--surface-soft) 34%);
+  cursor: not-allowed;
 }
 
 .editor-panel.switching .code-editor-surface {

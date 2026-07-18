@@ -6,6 +6,8 @@ import { useDropTargetController } from "../../features/designCard/services/useD
 import type { AINoteSceneActionRequest } from "../../features/ai/services/aiTypes";
 import type { NoteRenderBlock } from "../../features/notebook/rendering/noteForwarder";
 import type { NoteDocument } from "../../features/notebook/services/notebookStorage";
+import NotebookCornerPocket from "./NotebookCornerPocket.vue";
+import EditorAIOverlay from "../editor/EditorAIOverlay.vue";
 import NoteDocumentArea from "./panel/NoteDocumentArea.vue";
 import NoteFloatingOverlays from "./panel/NoteFloatingOverlays.vue";
 import NotePanelShell from "./panel/NotePanelShell.vue";
@@ -35,12 +37,16 @@ const props = defineProps<{
   renderBlocks: NoteRenderBlock[];
   saveState: "idle" | "saving" | "saved";
   aiBusy?: boolean;
+  aiOverlayActive?: boolean;
+  aiOverlayFinishing?: boolean;
 }>();
 
 const emit = defineEmits<{
   "add-images": [payload: { files: File[]; insertAt: number }];
   "ai-generate": [request: AINoteSceneActionRequest];
   "ai-design": [request: AINoteSceneActionRequest];
+  "stop-ai": [];
+  "ai-overlay-finished": [];
   "delete-design-card": [cardId: string];
   "insert-design-card": [payload: { cardId: string; insertAt: number; source?: "editor" | "note" }];
   "move-image": [payload: {
@@ -184,6 +190,7 @@ const {
   buildSelectionPayload,
   closeContextMenu,
   currentFile: () => props.currentFile,
+  getDocumentMarkdown: () => props.document.markdown,
   onDesign: (request) => emit("ai-design", request),
   onGenerate: (request) => emit("ai-generate", request),
 });
@@ -319,11 +326,23 @@ useNotePanelEffects({
       @write-more="focusMarkdownInputAtEnd"
     />
 
+    <NotebookCornerPocket
+      v-if="layoutMode !== 'code'"
+      :disabled="aiBusy"
+      @design="runAIDesign"
+      @generate="runAIGeneration"
+    />
+
     <template #overlays>
+      <EditorAIOverlay
+        :active="Boolean(aiOverlayActive)"
+        :finishing="Boolean(aiOverlayFinishing)"
+        @stop-ai="emit('stop-ai')"
+        @finished="emit('ai-overlay-finished')"
+      />
       <NoteFloatingOverlays
         :ai-busy="aiBusy"
         :context-menu="contextMenu"
-        :context-menu-has-selection="contextMenuHasSelection"
         :context-menu-supports-insert="contextMenuSupportsInsert"
         :context-menu-images="contextMenuImages"
         :preview-image="previewImage"

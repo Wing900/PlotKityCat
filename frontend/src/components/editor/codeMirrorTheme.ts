@@ -134,15 +134,4 @@ export const editorTheme = EditorView.theme({
   ".cm-streaming-line": {
     animation: "editor-stream-line 220ms ease",
   },
-  ".cm-design-card-widget": {
-    display: "block",
-    boxSizing: "border-box",
-    width: "100%",
-    padding: "16px 18px 22px 6px",
-  },
-  ".cm-design-card-widget .design-card-inline-block": {
-    width: "100%",
-    maxWidth: "100%",
-    margin: "0",
-  },
 });
