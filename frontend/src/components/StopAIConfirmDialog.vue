@@ -27,10 +27,15 @@ function confirm() {
 <template>
   <Transition name="create-dialog-backdrop" appear>
     <div v-if="open" class="dialog-backdrop" @click.self="cancel">
-      <section class="create-dialog stop-ai-dialog" role="dialog" aria-modal="true" aria-labelledby="stop-ai-title">
-        <h2 id="stop-ai-title">停止 AI 修复？</h2>
+      <section
+        class="create-dialog stop-ai-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="stop-ai-title"
+      >
+        <h2 id="stop-ai-title">中断 AI 生成</h2>
 
-        <p class="stop-ai-message">已进行的尝试将被丢弃，停止后需重新发起修复。</p>
+        <p class="stop-ai-message">已进行的尝试会丢弃,需重新发起。</p>
 
         <div class="create-dialog-actions">
           <button class="dialog-button secondary" type="button" :disabled="pending" @click="cancel">
@@ -38,7 +43,7 @@ function confirm() {
           </button>
           <span class="dialog-action-divider" aria-hidden="true"></span>
           <button class="dialog-button primary" type="button" :disabled="pending" @click="confirm">
-            {{ pending ? "停止中" : "停止" }}
+            {{ pending ? "中断中" : "中断" }}
           </button>
         </div>
       </section>

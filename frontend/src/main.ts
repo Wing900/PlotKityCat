@@ -8,7 +8,7 @@ import "./styles/layout.css";
 import "./styles/components/sidebar/index.css";
 import "./styles/components/topbar.css";
 import "./styles/components/editor.css";
-import "./styles/components/environment.css";
+import "./styles/components/corner-pocket.css";
 import "./styles/components/dialog.css";
 import "./styles/components/code-ai-optimize.css";
 import "./styles/components/design-card.css";

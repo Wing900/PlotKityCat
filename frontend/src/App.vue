@@ -7,8 +7,8 @@ import CodeAIOptimizeDialog from "./components/codeAIOptimize/CodeAIOptimizeDial
 import CodeAIVersionRail from "./components/codeAIOptimize/CodeAIVersionRail.vue";
 import DesignCardOptimizeDialog from "./features/designCard/components/DesignCardOptimizeDialog.vue";
 import DesignCardReviewRoom from "./features/designCard/components/DesignCardReviewRoom.vue";
+import EditorCornerPocket from "./components/editor/EditorCornerPocket.vue";
 import EditorPane from "./components/editor/EditorPane.vue";
-import EnvironmentIndicator from "./components/EnvironmentIndicator.vue";
 import PackageTransferDialog from "./components/PackageTransferDialog.vue";
 import NotePanel from "./components/note/NotePanel.vue";
 import RunErrorDialog from "./components/RunErrorDialog.vue";
@@ -28,6 +28,38 @@ const isSceneSwitching = ref(false);
 const isLoadingScreenVisible = ref(true);
 const isStopAIConfirmOpen = ref(false);
 const isStoppingAI = ref(false);
+const aiOverlayFinishing = ref(false);
+const aiOverlayVisible = ref(false);
+const designOverlayFinishing = ref(false);
+const designOverlayVisible = ref(false);
+
+watch(
+  () => workspace.isAIGenerating,
+  (busy, wasBusy) => {
+    if (busy) {
+      aiOverlayVisible.value = true;
+      aiOverlayFinishing.value = false;
+      return;
+    }
+    if (wasBusy && aiOverlayVisible.value) {
+      aiOverlayFinishing.value = true;
+    }
+  },
+);
+
+watch(
+  () => workspace.isDesigning,
+  (busy, wasBusy) => {
+    if (busy) {
+      designOverlayVisible.value = true;
+      designOverlayFinishing.value = false;
+      return;
+    }
+    if (wasBusy && designOverlayVisible.value) {
+      designOverlayFinishing.value = true;
+    }
+  },
+);
 
 let sceneSwitchTimer = 0;
 let hasMountedScene = false;
@@ -75,8 +107,17 @@ async function confirmStopAI() {
     return;
   }
   isStoppingAI.value = true;
+  // 中断路径: 立刻关闭遮罩, 跳过 finishing 渐隐动画
+  aiOverlayVisible.value = false;
+  aiOverlayFinishing.value = false;
+  designOverlayVisible.value = false;
+  designOverlayFinishing.value = false;
   try {
-    await workspace.stopAIWorkflow();
+    if (workspace.isAIGenerating) {
+      await workspace.stopAIWorkflow();
+    } else if (workspace.isDesigning) {
+      await workspace.stopDesigning();
+    }
   } catch (error) {
     console.warn("[stop-ai] 停止失败", error);
   } finally {
@@ -155,33 +196,29 @@ onBeforeUnmount(() => {
         <section class="editor-workspace-column">
           <EditorPane
             :code="workspace.codeContent"
-            :design-cards="workspace.designCards"
-            :design-card-placements="workspace.designCardPlacements"
-            :disabled="workspace.isAIGenerating"
+            :disabled="workspace.isAIGenerating || aiOverlayFinishing"
             :is-scene-switching="isSceneSwitching"
-            :is-streaming="workspace.isAIGenerating"
+            :is-streaming="workspace.isAIGenerating || aiOverlayFinishing"
+            :ai-overlay-active="aiOverlayVisible && !aiOverlayFinishing"
+            :ai-overlay-finishing="aiOverlayFinishing"
             :animated-line-ranges="workspace.repairAnimatedLineRanges"
             :animation-key="workspace.repairAnimationKey"
             @ai-optimize="workspace.openCodeAIOptimizeContextMenu"
-            @delete-design-card="workspace.deleteDesignCard"
-            @move-design-card="workspace.moveDesignCard"
-            @open-design-card="workspace.openDesignCardReviewRoom"
-            @place-design-card="workspace.placeDesignCard($event)"
-            @design-card-anchor-line="workspace.setDesignCardAnchorLine"
+            @stop-ai="handleStopAI"
+            @ai-overlay-finished="aiOverlayVisible = false; aiOverlayFinishing = false"
             @update:code="workspace.updateCode"
+          />
+
+          <EditorCornerPocket
+            v-if="workspace.workspaceLayoutMode !== 'note'"
+            :disabled="workspace.isAIGenerating || workspace.isDesigning || aiOverlayFinishing || designOverlayFinishing"
+            @optimize="workspace.openCodeAIOptimizeDialog()"
           />
 
           <CodeAIVersionRail
             :versions="workspace.codeAIOptimizeVersions"
             :active-id="workspace.codeAIOptimizeActiveVersionId"
             @select="workspace.selectCodeAIOptimizeVersion"
-          />
-
-          <EnvironmentIndicator
-            :is-running="workspace.isRunning"
-            :ai-busy="workspace.isAIGenerating"
-            :ai-label="workspace.aiStatusLabel"
-            @stop-ai="handleStopAI"
           />
         </section>
 
@@ -199,7 +236,9 @@ onBeforeUnmount(() => {
           :is-scene-switching="isSceneSwitching"
           :render-blocks="workspace.noteRenderBlocks"
           :save-state="workspace.noteSaveState"
-          :ai-busy="workspace.isAIGenerating"
+          :ai-busy="workspace.isAIGenerating || workspace.isDesigning"
+          :ai-overlay-active="designOverlayVisible && !designOverlayFinishing"
+          :ai-overlay-finishing="designOverlayFinishing"
           @show-code="workspace.toggleCodePane"
           @show-split="workspace.showSplitPane"
           @show-note="workspace.toggleNotePane"
@@ -212,6 +251,8 @@ onBeforeUnmount(() => {
           @open-design-card="workspace.openDesignCardReviewRoom"
           @ai-generate="workspace.generateCodeFromNoteSelection"
           @ai-design="workspace.generateDesignFromNoteSelection"
+          @stop-ai="handleStopAI"
+          @ai-overlay-finished="designOverlayVisible = false; designOverlayFinishing = false"
         />
       </div>
     </main>
