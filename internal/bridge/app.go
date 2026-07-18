@@ -9,6 +9,7 @@ import (
 	"plotkitycat/internal/codeversions"
 	"plotkitycat/internal/designcards"
 	designai "plotkitycat/internal/designcards/ai"
+	"plotkitycat/internal/designcards/session"
 	"plotkitycat/internal/device"
 	"plotkitycat/internal/env"
 	filestore "plotkitycat/internal/files/store"
@@ -29,6 +30,7 @@ type App struct {
 	aiWorkflow           *workflow.Service
 	codeVersionStore     *codeversions.Store
 	designCardService    *designcards.Service
+	designCardSession    *session.Service
 	deviceService        *device.Service
 	envManager           *env.Manager
 	fileStore            *filestore.Store
@@ -94,6 +96,7 @@ func NewApp() *App {
 	})
 
 	app.aiWorkflow = newAIWorkflowService(app)
+	app.designCardSession = newDesignCardSessionService(app)
 	return app
 }
 

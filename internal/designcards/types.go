@@ -23,11 +23,6 @@ type Version struct {
 	CreatedAt int64  `json:"createdAt"`
 }
 
-type Placement struct {
-	CardID    string `json:"cardId"`
-	AfterLine int    `json:"afterLine"`
-}
-
 type SelectionItem struct {
 	Kind         string
 	Text         string

@@ -95,24 +95,6 @@ func (a *App) DeleteDesignCard(sceneName string, cardID string) error {
 	return a.designCardService.Delete(sceneName, cardID)
 }
 
-func (a *App) ListDesignCardPlacements(sceneName string) ([]DesignCardPlacement, error) {
-	placements, err := a.designCardService.ListPlacements(sceneName)
-	if err != nil {
-		return nil, err
-	}
-
-	return mapDesignCardPlacements(placements), nil
-}
-
-func (a *App) SaveDesignCardPlacements(sceneName string, placements []DesignCardPlacement) ([]DesignCardPlacement, error) {
-	nextPlacements, err := a.designCardService.SavePlacements(sceneName, mapBridgeDesignCardPlacements(placements))
-	if err != nil {
-		return nil, err
-	}
-
-	return mapDesignCardPlacements(nextPlacements), nil
-}
-
 func (a *App) ListDesignCardVersions(sceneName string, cardID string) ([]DesignCardVersion, error) {
 	versions, err := a.designCardService.ListVersions(sceneName, cardID)
 	if err != nil {
@@ -120,30 +102,6 @@ func (a *App) ListDesignCardVersions(sceneName string, cardID string) ([]DesignC
 	}
 
 	return mapDesignCardVersions(versions), nil
-}
-
-func mapDesignCardPlacements(placements []designcards.Placement) []DesignCardPlacement {
-	mapped := make([]DesignCardPlacement, 0, len(placements))
-	for _, placement := range placements {
-		mapped = append(mapped, DesignCardPlacement{
-			CardID:    placement.CardID,
-			AfterLine: placement.AfterLine,
-		})
-	}
-
-	return mapped
-}
-
-func mapBridgeDesignCardPlacements(placements []DesignCardPlacement) []designcards.Placement {
-	mapped := make([]designcards.Placement, 0, len(placements))
-	for _, placement := range placements {
-		mapped = append(mapped, designcards.Placement{
-			CardID:    placement.CardID,
-			AfterLine: placement.AfterLine,
-		})
-	}
-
-	return mapped
 }
 
 func mapDesignCardSelectionItems(items []AISelectionItem) []designcards.SelectionItem {

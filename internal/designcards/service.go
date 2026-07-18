@@ -82,14 +82,6 @@ func (s *Service) Delete(sceneName string, cardID string) error {
 	return s.store.Delete(sceneName, cardID)
 }
 
-func (s *Service) ListPlacements(sceneName string) ([]Placement, error) {
-	return s.store.ListPlacements(sceneName)
-}
-
-func (s *Service) SavePlacements(sceneName string, placements []Placement) ([]Placement, error) {
-	return s.store.SavePlacements(sceneName, placements)
-}
-
 func (s *Service) ListVersions(sceneName string, cardID string) ([]Version, error) {
 	return s.store.ListVersions(sceneName, cardID)
 }

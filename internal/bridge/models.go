@@ -185,6 +185,47 @@ type AIDesignCardOptimizeRequest struct {
 	Settings    AIProviderSettings `json:"settings"`
 }
 
+type AIDesignCardSessionRequest struct {
+	Kind        string             `json:"kind"`
+	SceneName   string             `json:"sceneName"`
+	CardID      string             `json:"cardId"`
+	Instruction string             `json:"instruction"`
+	Settings    AIProviderSettings `json:"settings"`
+	Selection   AISelectionPayload `json:"selection"`
+}
+
+type AIDesignCardSession struct {
+	SessionID string `json:"sessionId"`
+	SceneName string `json:"sceneName"`
+	Kind      string `json:"kind"`
+	State     string `json:"state"`
+}
+
+type DesignCardStartedEvent struct {
+	SessionID string `json:"sessionId"`
+	SceneName string `json:"sceneName"`
+	Kind      string `json:"kind"`
+}
+
+type DesignCardSucceededEvent struct {
+	SessionID string      `json:"sessionId"`
+	SceneName string      `json:"sceneName"`
+	Card      DesignCard  `json:"card"`
+	Source    string      `json:"source"`
+}
+
+type DesignCardFailedEvent struct {
+	SessionID string `json:"sessionId"`
+	SceneName string `json:"sceneName"`
+	ErrorText string `json:"errorText"`
+}
+
+type DesignCardInterruptedEvent struct {
+	SessionID string `json:"sessionId"`
+	SceneName string `json:"sceneName"`
+	Message   string `json:"message"`
+}
+
 type DesignCard struct {
 	ID        string `json:"id"`
 	CreatedAt int64  `json:"createdAt"`
@@ -202,11 +243,6 @@ type DesignCardVersion struct {
 	Plan      string `json:"plan"`
 	SVG       string `json:"svg"`
 	CreatedAt int64  `json:"createdAt"`
-}
-
-type DesignCardPlacement struct {
-	CardID    string `json:"cardId"`
-	AfterLine int    `json:"afterLine"`
 }
 
 type AIDesignCardResult struct {

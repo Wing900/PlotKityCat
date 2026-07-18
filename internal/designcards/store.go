@@ -15,9 +15,8 @@ const (
 	cardsDirName      = "design_cards"
 	planFileName      = "plan.py"
 	svgFileName       = "preview.svg"
-	metaFileName      = "meta.json"
-	placementFileName = ".placements.json"
-	versionFileName   = ".ai-design-versions.json"
+	metaFileName    = "meta.json"
+	versionFileName = ".ai-design-versions.json"
 	maxVersions       = 50
 )
 
@@ -176,70 +175,7 @@ func (s *Store) Delete(sceneName string, cardID string) error {
 		return err
 	}
 
-	if err := os.RemoveAll(cardDir); err != nil {
-		return err
-	}
-
-	placements, err := s.ListPlacements(sceneName)
-	if err != nil {
-		return err
-	}
-	filtered := make([]Placement, 0, len(placements))
-	for _, placement := range placements {
-		if placement.CardID != cardID {
-			filtered = append(filtered, placement)
-		}
-	}
-
-	_, err = s.SavePlacements(sceneName, filtered)
-	return err
-}
-
-func (s *Store) ListPlacements(sceneName string) ([]Placement, error) {
-	root, err := s.cardsRoot(sceneName)
-	if err != nil {
-		return nil, err
-	}
-
-	content, err := os.ReadFile(filepath.Join(root, placementFileName))
-	if os.IsNotExist(err) {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, err
-	}
-	if strings.TrimSpace(string(content)) == "" {
-		return []Placement{}, nil
-	}
-
-	var placements []Placement
-	if err := json.Unmarshal(content, &placements); err != nil {
-		return nil, fmt.Errorf("读取 design card 位置失败: %w", err)
-	}
-
-	return normalizePlacements(placements), nil
-}
-
-func (s *Store) SavePlacements(sceneName string, placements []Placement) ([]Placement, error) {
-	root, err := s.cardsRoot(sceneName)
-	if err != nil {
-		return nil, err
-	}
-	if err := os.MkdirAll(root, 0o755); err != nil {
-		return nil, err
-	}
-
-	normalized := normalizePlacements(placements)
-	content, err := json.MarshalIndent(normalized, "", "  ")
-	if err != nil {
-		return nil, err
-	}
-
-	if err := os.WriteFile(filepath.Join(root, placementFileName), append(content, '\n'), 0o644); err != nil {
-		return nil, err
-	}
-
-	return normalized, nil
+	return os.RemoveAll(cardDir)
 }
 
 func (s *Store) ListVersions(sceneName string, cardID string) ([]Version, error) {
@@ -440,25 +376,6 @@ func relabelVersions(versions []Version) []Version {
 	}
 
 	return next
-}
-
-func normalizePlacements(placements []Placement) []Placement {
-	seen := make(map[string]bool, len(placements))
-	normalized := make([]Placement, 0, len(placements))
-	for _, placement := range placements {
-		cardID := strings.TrimSpace(placement.CardID)
-		if cardID == "" || seen[cardID] {
-			continue
-		}
-		if placement.AfterLine < 0 {
-			placement.AfterLine = 0
-		}
-		placement.CardID = cardID
-		seen[cardID] = true
-		normalized = append(normalized, placement)
-	}
-
-	return normalized
 }
 
 func firstNonEmpty(values ...string) string {

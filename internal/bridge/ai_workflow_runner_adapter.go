@@ -5,8 +5,13 @@ import (
 
 	"plotkitycat/internal/aicode/operations"
 	"plotkitycat/internal/aicode/workflow"
+	"plotkitycat/internal/designcards/session"
 	"plotkitycat/internal/runner"
 )
+
+func newDesignCardSessionService(app *App) *session.Service {
+	return session.NewService(designCardBuilder{service: app.designCardService}, newDesignCardEventSink(app))
+}
 
 func newAIWorkflowService(app *App) *workflow.Service {
 	builder := operations.NewService(app.aiService)
