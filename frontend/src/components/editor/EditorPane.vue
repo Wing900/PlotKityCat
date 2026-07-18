@@ -163,6 +163,7 @@ function handlePanelPointerDown(event: PointerEvent) {
     <EditorAIOverlay
       :active="Boolean(aiOverlayActive)"
       :finishing="Boolean(aiOverlayFinishing)"
+      mode="code"
       @stop-ai="emit('stop-ai')"
       @finished="emit('ai-overlay-finished')"
     />

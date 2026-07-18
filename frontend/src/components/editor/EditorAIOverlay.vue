@@ -7,6 +7,7 @@ import { useFluidScrim } from "./useFluidScrim";
 const props = defineProps<{
   active: boolean;
   finishing: boolean;
+  mode?: "code" | "design";
 }>();
 
 const emit = defineEmits<{
@@ -20,12 +21,20 @@ const scrimCanvasEl = ref<HTMLCanvasElement | null>(null);
 const tipIndex = ref(0);
 const mascotOffset = ref({ x: 0, y: 0 });
 let dragStart: { x: number; y: number; ox: number; oy: number } | null = null;
-const tips = [
-  "AI 正在生成中。",
-  "小猫在帮你改代码。",
-  "先别动编辑器，马上好。",
-  "生成完成后会自动解锁。",
-];
+const tips =
+  props.mode === "design"
+    ? [
+        "AI 正在生成中。",
+        "小猫在帮你做卡片。",
+        "先别动笔记，马上好。",
+        "生成完成后会自动解锁。",
+      ]
+    : [
+        "AI 正在生成中。",
+        "小猫在帮你改代码。",
+        "先别动编辑器，马上好。",
+        "生成完成后会自动解锁。",
+      ];
 
 let rive: Rive | null = null;
 let tipTimer = 0;

@@ -337,6 +337,7 @@ useNotePanelEffects({
       <EditorAIOverlay
         :active="Boolean(aiOverlayActive)"
         :finishing="Boolean(aiOverlayFinishing)"
+        mode="design"
         @stop-ai="emit('stop-ai')"
         @finished="emit('ai-overlay-finished')"
       />
