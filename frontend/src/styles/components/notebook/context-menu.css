@@ -50,7 +50,8 @@
   color: #b74848;
 }
 
-.notebook-context-icon {
+.notebook-context-icon,
+.note-ai-icon {
   width: 14px;
   height: 14px;
   fill: none;
