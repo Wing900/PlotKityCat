@@ -1,0 +1,210 @@
+.corner-pocket {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.corner-pocket-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--fill-soft), transparent 24%);
+  color: var(--text-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text), transparent 97%);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.corner-pocket-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fill-strong), transparent 16%);
+  color: var(--text);
+}
+
+.corner-pocket-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.corner-pocket-btn:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.corner-pocket-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+
+.corner-pocket-hint {
+  pointer-events: none;
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-raised);
+  color: var(--muted);
+  box-shadow: var(--shadow-1);
+  font-size: 11px;
+}
+
+.corner-pocket.shaking {
+  animation: corner-pocket-shake 320ms var(--ease-spring);
+}
+
+@keyframes corner-pocket-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+
+.editor-ai-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  background: var(--workspace-bg);
+}
+
+.editor-ai-overlay-scrim {
+  position: absolute;
+  inset: -30px;
+  width: calc(100% + 60px);
+  height: calc(100% + 60px);
+  pointer-events: none;
+  filter: blur(64px);
+  opacity: 0.85;
+  z-index: 2;
+}
+
+@keyframes editor-ai-scrim-drift {
+  0% {
+    opacity: 0.92;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.96;
+  }
+}
+
+.editor-ai-overlay-center {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: 220px;
+}
+
+.editor-ai-mascot-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: grab;
+  touch-action: none;
+  transition: transform 60ms var(--ease-out);
+}
+
+.editor-ai-mascot-button:active {
+  cursor: grabbing;
+}
+
+.editor-ai-mascot-canvas {
+  width: 160px;
+  height: 160px;
+  display: block;
+}
+
+.editor-ai-tip-rail {
+  position: relative;
+  width: min(280px, 70vw);
+  height: 28px;
+  overflow: hidden;
+}
+
+.editor-ai-tip {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out);
+}
+
+.editor-ai-tip.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.editor-ai-stop {
+  min-height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: var(--fill-soft);
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.editor-ai-stop:hover {
+  background: var(--fill-strong);
+  color: var(--text);
+}
+
+.editor-ai-overlay.finishing {
+  opacity: 0;
+  transition: opacity 2s var(--ease-out);
+}
+
+.editor-ai-overlay.finishing .editor-ai-overlay-center,
+.editor-ai-overlay.finishing .editor-ai-overlay-scrim {
+  opacity: 0;
+  transition: opacity 1.6s var(--ease-out);
+}
+
+.editor-workspace-column,
+.notebook-panel-shell {
+  position: relative;
+}
+
+.notebook-scroll {
+  padding-bottom: 72px;
+}
