@@ -60,8 +60,6 @@ export function InstallUpdateAndRestart():Promise<void>;
 
 export function ListCodeAIVersions(arg1:string):Promise<Array<bridge.CodeAIVersion>>;
 
-export function ListDesignCardPlacements(arg1:string):Promise<Array<bridge.DesignCardPlacement>>;
-
 export function ListDesignCardVersions(arg1:string,arg2:string):Promise<Array<bridge.DesignCardVersion>>;
 
 export function ListDesignCards(arg1:string):Promise<Array<bridge.DesignCard>>;
@@ -90,19 +88,21 @@ export function SaveAISettings(arg1:bridge.AIProviderSettings):Promise<bridge.AI
 
 export function SaveAndRun(arg1:string,arg2:string):Promise<void>;
 
-export function SaveDesignCardPlacements(arg1:string,arg2:Array<bridge.DesignCardPlacement>):Promise<Array<bridge.DesignCardPlacement>>;
-
 export function SaveScript(arg1:string,arg2:string):Promise<void>;
 
 export function SaveScriptNote(arg1:string,arg2:string):Promise<void>;
 
 export function StartAIWorkflow(arg1:bridge.AIWorkflowRequest):Promise<bridge.AIWorkflowSession>;
 
+export function StartDesignCardSession(arg1:bridge.AIDesignCardSessionRequest):Promise<bridge.AIDesignCardSession>;
+
 export function StartScreening(arg1:bridge.ScreeningStartRequest):Promise<bridge.ScreeningSessionState>;
 
 export function StopAIWorkflow(arg1:string):Promise<void>;
 
 export function StopCurrentRun():Promise<bridge.RunControlResult>;
+
+export function StopDesignCardSession(arg1:string):Promise<void>;
 
 export function StopScreening():Promise<bridge.ScreeningStopResult>;
 

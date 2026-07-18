@@ -3,7 +3,8 @@ import type {
   AIDesignCardOptimizeRequest,
   AIDesignCardResult,
   DesignCard,
-  DesignCardPlacement,
+  DesignCardSession,
+  DesignCardSessionRequest,
   DesignCardVersion,
 } from "./designCardTypes";
 
@@ -14,7 +15,6 @@ type BridgeAppCompat = {
   ) => Promise<AIDesignCardResult>;
   GetDesignCard?: (sceneName: string, cardId: string) => Promise<DesignCard>;
   ListDesignCards?: (sceneName: string) => Promise<DesignCard[]>;
-  ListDesignCardPlacements?: (sceneName: string) => Promise<DesignCardPlacement[]>;
   ListDesignCardVersions?: (
     sceneName: string,
     cardId: string,
@@ -22,10 +22,10 @@ type BridgeAppCompat = {
   OptimizeDesignCard?: (
     request: AIDesignCardOptimizeRequest,
   ) => Promise<AIDesignCardResult>;
-  SaveDesignCardPlacements?: (
-    sceneName: string,
-    placements: DesignCardPlacement[],
-  ) => Promise<DesignCardPlacement[]>;
+  StartDesignCardSession?: (
+    request: DesignCardSessionRequest,
+  ) => Promise<DesignCardSession>;
+  StopDesignCardSession?: (sessionId: string) => Promise<void>;
   UpdateDesignCardPlan?: (
     sceneName: string,
     cardId: string,
@@ -64,43 +64,7 @@ export async function listDesignCards(sceneName: string): Promise<DesignCard[]> 
   return [];
 }
 
-export async function listDesignCardPlacements(sceneName: string): Promise<{
-  hasSavedPlacementState: boolean;
-  placements: DesignCardPlacement[];
-}> {
-  const bridgeApp = getBridgeApp();
-  if (typeof bridgeApp.ListDesignCardPlacements === "function") {
-    const rawPlacements = await bridgeApp.ListDesignCardPlacements(sceneName);
-    if (!Array.isArray(rawPlacements)) {
-      return {
-        hasSavedPlacementState: false,
-        placements: [],
-      };
-    }
 
-    return {
-      hasSavedPlacementState: true,
-      placements: rawPlacements.map(normalizePlacement),
-    };
-  }
-
-  return {
-    hasSavedPlacementState: false,
-    placements: [],
-  };
-}
-
-export async function saveDesignCardPlacements(
-  sceneName: string,
-  placements: DesignCardPlacement[],
-): Promise<DesignCardPlacement[]> {
-  const bridgeApp = getBridgeApp();
-  if (typeof bridgeApp.SaveDesignCardPlacements === "function") {
-    return (await bridgeApp.SaveDesignCardPlacements(sceneName, placements)).map(normalizePlacement);
-  }
-
-  throw new Error("当前运行中的后端版本还不支持保存设计卡片位置，请重启应用后再试");
-}
 
 export async function getDesignCard(sceneName: string, cardId: string): Promise<DesignCard> {
   const bridgeApp = getBridgeApp();
@@ -153,6 +117,37 @@ export async function listDesignCardVersions(
   return [];
 }
 
+export async function startDesignCardSession(
+  request: DesignCardSessionRequest,
+): Promise<DesignCardSession> {
+  const bridgeApp = getBridgeApp();
+  if (typeof bridgeApp.StartDesignCardSession === "function") {
+    const session = await bridgeApp.StartDesignCardSession(request);
+    return normalizeSession(session);
+  }
+
+  throw new Error("当前运行中的后端版本还不支持设计卡片会话, 请重启应用后再试");
+}
+
+export async function stopDesignCardSession(sessionId: string): Promise<void> {
+  const bridgeApp = getBridgeApp();
+  if (typeof bridgeApp.StopDesignCardSession === "function") {
+    await bridgeApp.StopDesignCardSession(sessionId);
+    return;
+  }
+
+  throw new Error("当前运行中的后端版本还不支持停止设计卡片会话, 请重启应用后再试");
+}
+
+function normalizeSession(session: DesignCardSession): DesignCardSession {
+  return {
+    sessionId: String(session.sessionId ?? ""),
+    sceneName: String(session.sceneName ?? ""),
+    kind: String(session.kind ?? ""),
+    state: String(session.state ?? "working"),
+  };
+}
+
 function normalizeDesignCardResult(result: AIDesignCardResult): AIDesignCardResult {
   return {
     card: normalizeDesignCard(result.card),
@@ -172,14 +167,6 @@ function normalizeDesignCard(card: Partial<DesignCard> | null | undefined): Desi
   };
 }
 
-function normalizePlacement(
-  placement: Partial<DesignCardPlacement> | null | undefined,
-): DesignCardPlacement {
-  return {
-    cardId: String(placement?.cardId ?? ""),
-    afterLine: Math.max(0, Number(placement?.afterLine ?? 0)),
-  };
-}
 
 function getBridgeApp(): BridgeAppCompat {
   return ((window as typeof window & {

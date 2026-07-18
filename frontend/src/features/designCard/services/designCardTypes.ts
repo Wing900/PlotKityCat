@@ -37,7 +37,46 @@ export type AIDesignCardResult = {
   source: string;
 };
 
-export type DesignCardPlacement = {
+export type DesignCardSessionKind = "generate" | "optimize";
+
+export type DesignCardSessionRequest = {
+  kind: DesignCardSessionKind;
+  sceneName: string;
   cardId: string;
-  afterLine: number;
+  instruction: string;
+  settings: AIProviderSettings;
+  selection: AINoteSelectionPayload;
 };
+
+export type DesignCardSession = {
+  sessionId: string;
+  sceneName: string;
+  kind: string;
+  state: string;
+};
+
+export type DesignCardStartedEvent = {
+  sessionId: string;
+  sceneName: string;
+  kind: string;
+};
+
+export type DesignCardSucceededEvent = {
+  sessionId: string;
+  sceneName: string;
+  card: DesignCard;
+  source: string;
+};
+
+export type DesignCardFailedEvent = {
+  sessionId: string;
+  sceneName: string;
+  errorText: string;
+};
+
+export type DesignCardInterruptedEvent = {
+  sessionId: string;
+  sceneName: string;
+  message: string;
+};
+

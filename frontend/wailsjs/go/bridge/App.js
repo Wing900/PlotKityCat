@@ -118,10 +118,6 @@ export function ListCodeAIVersions(arg1) {
   return window['go']['bridge']['App']['ListCodeAIVersions'](arg1);
 }
 
-export function ListDesignCardPlacements(arg1) {
-  return window['go']['bridge']['App']['ListDesignCardPlacements'](arg1);
-}
-
 export function ListDesignCardVersions(arg1, arg2) {
   return window['go']['bridge']['App']['ListDesignCardVersions'](arg1, arg2);
 }
@@ -178,10 +174,6 @@ export function SaveAndRun(arg1, arg2) {
   return window['go']['bridge']['App']['SaveAndRun'](arg1, arg2);
 }
 
-export function SaveDesignCardPlacements(arg1, arg2) {
-  return window['go']['bridge']['App']['SaveDesignCardPlacements'](arg1, arg2);
-}
-
 export function SaveScript(arg1, arg2) {
   return window['go']['bridge']['App']['SaveScript'](arg1, arg2);
 }
@@ -194,6 +186,10 @@ export function StartAIWorkflow(arg1) {
   return window['go']['bridge']['App']['StartAIWorkflow'](arg1);
 }
 
+export function StartDesignCardSession(arg1) {
+  return window['go']['bridge']['App']['StartDesignCardSession'](arg1);
+}
+
 export function StartScreening(arg1) {
   return window['go']['bridge']['App']['StartScreening'](arg1);
 }
@@ -204,6 +200,10 @@ export function StopAIWorkflow(arg1) {
 
 export function StopCurrentRun() {
   return window['go']['bridge']['App']['StopCurrentRun']();
+}
+
+export function StopDesignCardSession(arg1) {
+  return window['go']['bridge']['App']['StopDesignCardSession'](arg1);
 }
 
 export function StopScreening() {
