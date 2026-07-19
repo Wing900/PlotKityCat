@@ -183,6 +183,18 @@
   place-items: center;
   pointer-events: auto;
   background: var(--workspace-bg);
+  animation: editor-ai-overlay-enter 360ms var(--ease-out);
+}
+
+@keyframes editor-ai-overlay-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .editor-ai-overlay-scrim {

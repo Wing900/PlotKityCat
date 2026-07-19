@@ -5,16 +5,16 @@ type ThemeId = "moon" | "warm" | "cyan" | "black";
 
 const PALETTES: Record<ThemeId, Array<{ pos: number; rgba: Rgba }>> = {
   moon: [
-    { pos: 0, rgba: [245, 250, 240, 0.58] },
-    { pos: 0.5, rgba: [200, 230, 205, 0.42] },
-    { pos: 0.82, rgba: [170, 210, 180, 0.18] },
-    { pos: 1, rgba: [170, 210, 180, 0] },
+    { pos: 0, rgba: [245, 245, 242, 0.55] },
+    { pos: 0.5, rgba: [212, 210, 205, 0.4] },
+    { pos: 0.82, rgba: [182, 180, 175, 0.18] },
+    { pos: 1, rgba: [182, 180, 175, 0] },
   ],
   warm: [
-    { pos: 0, rgba: [252, 246, 232, 0.75] },
-    { pos: 0.5, rgba: [225, 185, 120, 0.6] },
-    { pos: 0.82, rgba: [200, 150, 95, 0.28] },
-    { pos: 1, rgba: [200, 150, 95, 0] },
+    { pos: 0, rgba: [245, 188, 172, 0.55] },
+    { pos: 0.5, rgba: [232, 168, 151, 0.4] },
+    { pos: 0.82, rgba: [245, 210, 200, 0.18] },
+    { pos: 1, rgba: [245, 210, 200, 0] },
   ],
   cyan: [
     { pos: 0, rgba: [240, 248, 252, 0.75] },
@@ -125,6 +125,9 @@ export function useFluidScrim() {
   }
 
   function setAnchor(offsetX: number, offsetY: number) {
+    if (!cssWidth || !cssHeight) {
+      return;
+    }
     targetX = clampAnchor(0.5 + offsetX / cssWidth);
     targetY = clampAnchor(0.5 + offsetY / cssHeight);
   }
