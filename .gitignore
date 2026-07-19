@@ -38,3 +38,6 @@ tec.md
 prd.md
 designcard.md
 designcard-tec.md
+
+# Local experiment sandbox (prompt eval / card gen)
+.tmp/
