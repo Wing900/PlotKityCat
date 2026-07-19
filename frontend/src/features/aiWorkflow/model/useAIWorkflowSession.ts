@@ -1,18 +1,19 @@
-import { computed, onUnmounted, ref, type Ref } from "vue";
-import { EventsOn } from "../../../../wailsjs/runtime/runtime";
+import { ref, type ComputedRef, type Ref } from "vue";
+import {
+  startAIWorkflow,
+  stopAIWorkflow,
+} from "../services/aiWorkflowBridgeCompat";
 import type {
   AIWorkflowCodeAppliedEvent,
   AIWorkflowFailedEvent,
   AIWorkflowInterruptedEvent,
   AIWorkflowRequest,
+  AIWorkflowSession,
   AIWorkflowState,
   AIWorkflowStateChangedEvent,
   AIWorkflowSucceededEvent,
 } from "../../ai/services/aiTypes";
-import {
-  startAIWorkflow,
-  stopAIWorkflow,
-} from "../services/aiWorkflowBridgeCompat";
+import { useSessionMirror } from "../../../lib/sessionMirror";
 
 type AIActivityStatus = {
   isAIGenerating: Ref<boolean>;
@@ -35,174 +36,102 @@ type WorkflowTerminalResult =
   | { ok: false; type: "interrupted"; event: AIWorkflowInterruptedEvent };
 
 export function useAIWorkflowSession(aiActivity: AIActivityStatus) {
-  const activeSessionId = ref("");
   const activeState = ref<AIWorkflowState>("idle");
-  const cleanupEvents = bindWorkflowEvents();
 
-  let pendingResolver:
-    | ((result: WorkflowTerminalResult) => void)
-    | null = null;
-  let activeOptions: StartWorkflowOptions | null = null;
-
-  const isSessionActive = computed(() => activeSessionId.value !== "");
+  const mirror = useSessionMirror({
+    startBridge: (req) => startAIWorkflow(req as AIWorkflowRequest),
+    stopBridge: stopAIWorkflow,
+    busyMessage: "已有 AI 工作流正在运行，请先等待完成或手动停止",
+    onBeforeStart: () => aiActivity.startWorking(),
+    onStartError: () => aiActivity.stop(),
+    onSettle: () => {
+      activeState.value = "idle";
+      aiActivity.stop();
+    },
+    onSessionBound: (session) => {
+      activeState.value = normalizeState((session as AIWorkflowSession).state);
+    },
+    fallbackInterruptedResult: (sessionId) => ({
+      ok: false,
+      type: "interrupted" as const,
+      event: {
+        attempt: 0,
+        message: "AI 工作流已被关闭",
+        sceneName: "",
+        sessionId,
+      } satisfies AIWorkflowInterruptedEvent,
+    }),
+    routes: [
+      {
+        eventName: "ai:workflow_state_changed",
+        handle: (event, { options, safeCall }) => {
+          const e = event as AIWorkflowStateChangedEvent;
+          activeState.value = normalizeState(e.state);
+          if (e.state === "checking") {
+            aiActivity.startChecking();
+          } else if (e.state === "working") {
+            aiActivity.startWorking();
+          }
+          safeCall(() => options.onStateChanged?.(e));
+          return undefined;
+        },
+      },
+      {
+        eventName: "ai:workflow_code_applied",
+        handle: (event, { options, safeCall }) => {
+          safeCall(() => options.onCodeApplied?.(event as AIWorkflowCodeAppliedEvent));
+          return undefined;
+        },
+      },
+      {
+        eventName: "ai:workflow_succeeded",
+        handle: (event, { options, safeCall }) => {
+          safeCall(() => options.onSucceeded?.(event as AIWorkflowSucceededEvent));
+          return { ok: true, event: event as AIWorkflowSucceededEvent };
+        },
+      },
+      {
+        eventName: "ai:workflow_failed",
+        handle: (event, { options, safeCall }) => {
+          safeCall(() => options.onFailed?.(event as AIWorkflowFailedEvent));
+          return {
+            ok: false,
+            type: "failed" as const,
+            event: event as AIWorkflowFailedEvent,
+          };
+        },
+      },
+      {
+        eventName: "ai:workflow_interrupted",
+        handle: (event, { options, safeCall }) => {
+          safeCall(() => options.onInterrupted?.(event as AIWorkflowInterruptedEvent));
+          return {
+            ok: false,
+            type: "interrupted" as const,
+            event: event as AIWorkflowInterruptedEvent,
+          };
+        },
+      },
+    ],
+  });
 
   async function startWorkflow(
     request: AIWorkflowRequest,
     options: StartWorkflowOptions = {},
   ): Promise<WorkflowTerminalResult> {
-    if (activeSessionId.value) {
-      throw new Error("已有 AI 工作流正在运行，请先等待完成或手动停止");
-    }
-
-    aiActivity.startWorking();
-    activeOptions = options;
-
-    try {
-      const session = await startAIWorkflow(request);
-      activeSessionId.value = session.sessionId;
-      activeState.value = normalizeState(session.state);
-      return await new Promise<WorkflowTerminalResult>((resolve) => {
-        pendingResolver = resolve;
-      });
-    } catch (error) {
-      aiActivity.stop();
-      activeOptions = null;
-      throw error;
-    }
+    return mirror.startSession(request, options as never) as Promise<WorkflowTerminalResult>;
   }
 
   async function stopActiveWorkflow() {
-    if (!activeSessionId.value) {
-      return;
-    }
-
-    await stopAIWorkflow(activeSessionId.value);
+    await mirror.stopActiveSession();
   }
-
-  function bindWorkflowEvents() {
-    return [
-      EventsOn("ai:workflow_state_changed", (...payload) => {
-        handleStateChanged(payload[0] as AIWorkflowStateChangedEvent | undefined);
-      }),
-      EventsOn("ai:workflow_code_applied", (...payload) => {
-        handleCodeApplied(payload[0] as AIWorkflowCodeAppliedEvent | undefined);
-      }),
-      EventsOn("ai:workflow_succeeded", (...payload) => {
-        handleSucceeded(payload[0] as AIWorkflowSucceededEvent | undefined);
-      }),
-      EventsOn("ai:workflow_failed", (...payload) => {
-        handleFailed(payload[0] as AIWorkflowFailedEvent | undefined);
-      }),
-      EventsOn("ai:workflow_interrupted", (...payload) => {
-        handleInterrupted(payload[0] as AIWorkflowInterruptedEvent | undefined);
-      }),
-    ];
-  }
-
-  function handleStateChanged(event?: AIWorkflowStateChangedEvent) {
-    if (!event || event.sessionId !== activeSessionId.value) {
-      return;
-    }
-
-    activeState.value = normalizeState(event.state);
-    if (event.state === "checking") {
-      aiActivity.startChecking();
-    } else if (event.state === "working") {
-      aiActivity.startWorking();
-    }
-
-    safeInvoke(() => activeOptions?.onStateChanged?.(event));
-  }
-
-  function handleCodeApplied(event?: AIWorkflowCodeAppliedEvent) {
-    if (!event || event.sessionId !== activeSessionId.value) {
-      return;
-    }
-
-    safeInvoke(() => activeOptions?.onCodeApplied?.(event));
-  }
-
-  function handleSucceeded(event?: AIWorkflowSucceededEvent) {
-    if (!event || event.sessionId !== activeSessionId.value) {
-      return;
-    }
-
-    try {
-      activeOptions?.onSucceeded?.(event);
-    } finally {
-      settle({ ok: true, event });
-    }
-  }
-
-  function handleFailed(event?: AIWorkflowFailedEvent) {
-    if (!event || event.sessionId !== activeSessionId.value) {
-      return;
-    }
-
-    try {
-      activeOptions?.onFailed?.(event);
-    } finally {
-      settle({ ok: false, type: "failed", event });
-    }
-  }
-
-  function handleInterrupted(event?: AIWorkflowInterruptedEvent) {
-    if (!event || event.sessionId !== activeSessionId.value) {
-      return;
-    }
-
-    try {
-      activeOptions?.onInterrupted?.(event);
-    } finally {
-      settle({ ok: false, type: "interrupted", event });
-    }
-  }
-
-  function settle(result: WorkflowTerminalResult) {
-    const resolve = pendingResolver;
-    pendingResolver = null;
-    activeOptions = null;
-    activeSessionId.value = "";
-    activeState.value = "idle";
-    aiActivity.stop();
-    resolve?.(result);
-  }
-
-  onUnmounted(() => {
-    cleanupEvents.forEach((cleanup) => cleanup());
-    cleanupEvents.length = 0;
-    if (activeSessionId.value) {
-      void stopAIWorkflow(activeSessionId.value).catch(() => undefined);
-    }
-    if (pendingResolver) {
-      pendingResolver({
-        ok: false,
-        type: "interrupted",
-        event: {
-          attempt: 0,
-          message: "AI 工作流已被关闭",
-          sceneName: "",
-          sessionId: activeSessionId.value,
-        },
-      });
-      pendingResolver = null;
-    }
-  });
 
   return {
     activeState,
-    isSessionActive,
+    isSessionActive: mirror.isSessionActive,
     startWorkflow,
     stopActiveWorkflow,
   };
-}
-
-function safeInvoke(fn: () => void) {
-  try {
-    fn();
-  } catch (error) {
-    console.error(error);
-  }
 }
 
 function normalizeState(value: string): AIWorkflowState {

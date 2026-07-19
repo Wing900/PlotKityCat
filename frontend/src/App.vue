@@ -19,7 +19,7 @@ import SidebarPanel from "./components/sidebar/SidebarPanel.vue";
 import StopAIConfirmDialog from "./components/StopAIConfirmDialog.vue";
 import TopBar from "./components/TopBar.vue";
 import UpdateRestartDialog from "./components/UpdateRestartDialog.vue";
-import { usePlotWorkspace } from "./features/plot/model/usePlotWorkspace";
+import { usePlotWorkspace } from "./features/plot/model/workspace/usePlotWorkspace";
 import { useTheme } from "./composables/useTheme";
 
 const workspace = reactive(usePlotWorkspace());
