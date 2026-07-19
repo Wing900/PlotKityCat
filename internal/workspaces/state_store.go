@@ -13,6 +13,16 @@ type stateFile struct {
 	CurrentWorkspace string `json:"current_workspace"`
 }
 
+// statePathProvider 默认指向 paths.WorkspaceStatePath, 测试可经 WithWorkspaceStatePath 注入临时文件。
+var statePathProvider = func() (string, error) { return paths.WorkspaceStatePath() }
+
+// WithWorkspaceStatePath 覆盖 statePathProvider, 返回 restore (测试用 t.Cleanup)。
+func WithWorkspaceStatePath(path string) func() {
+	orig := statePathProvider
+	statePathProvider = func() (string, error) { return path, nil }
+	return func() { statePathProvider = orig }
+}
+
 type StateStore struct{}
 
 func NewStateStore() *StateStore {
@@ -20,7 +30,7 @@ func NewStateStore() *StateStore {
 }
 
 func (s *StateStore) LoadCurrentWorkspace() (string, error) {
-	path, err := paths.WorkspaceStatePath()
+	path, err := statePathProvider()
 	if err != nil {
 		return "", err
 	}
@@ -42,7 +52,7 @@ func (s *StateStore) LoadCurrentWorkspace() (string, error) {
 }
 
 func (s *StateStore) SaveCurrentWorkspace(name string) error {
-	path, err := paths.WorkspaceStatePath()
+	path, err := statePathProvider()
 	if err != nil {
 		return err
 	}

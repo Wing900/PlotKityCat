@@ -8,8 +8,18 @@ import (
 	"plotkitycat/internal/paths"
 )
 
+// scriptsRootProvider 默认指向 paths.ScriptsDir, 测试可经 WithScriptsRoot 注入临时根目录。
+var scriptsRootProvider = func() (string, error) { return paths.ScriptsDir() }
+
+// WithScriptsRoot 覆盖 scriptsRootProvider, 返回 restore 函数 (测试用 t.Cleanup 调用)。
+func WithScriptsRoot(root string) func() {
+	orig := scriptsRootProvider
+	scriptsRootProvider = func() (string, error) { return root, nil }
+	return func() { scriptsRootProvider = orig }
+}
+
 func scriptsRoot() (string, error) {
-	return paths.ScriptsDir()
+	return scriptsRootProvider()
 }
 
 func ensureRoot() (string, error) {
