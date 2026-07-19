@@ -6,14 +6,21 @@ import (
 	"strings"
 )
 
-type Service struct{}
+type Service struct {
+	guidProvider func() (string, error)
+}
 
 func NewService() *Service {
-	return &Service{}
+	return &Service{guidProvider: machineGuid}
+}
+
+// NewServiceWithProvider 仅供测试注入 guid 来源, 生产代码用 NewService.
+func NewServiceWithProvider(provider func() (string, error)) *Service {
+	return &Service{guidProvider: provider}
 }
 
 func (s *Service) ID() (string, error) {
-	value, err := machineGuid()
+	value, err := s.guidProvider()
 	if err != nil {
 		return "", err
 	}
