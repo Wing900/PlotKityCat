@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, reactive, ref, watch } from "vue";
-import CreateScriptDialog from "./components/CreateScriptDialog.vue";
-import AISettingsDialog from "./components/AISettingsDialog.vue";
+import CreateScriptDialog from "./components/dialogs/CreateScriptDialog.vue";
+import AISettingsDialog from "./components/dialogs/AISettingsDialog.vue";
 import CodeAIOptimizeContextMenu from "./components/codeAIOptimize/CodeAIOptimizeContextMenu.vue";
 import CodeAIOptimizeDialog from "./components/codeAIOptimize/CodeAIOptimizeDialog.vue";
 import CodeAIVersionRail from "./components/codeAIOptimize/CodeAIVersionRail.vue";
@@ -9,16 +9,16 @@ import DesignCardOptimizeDialog from "./features/designCard/components/DesignCar
 import DesignCardReviewRoom from "./features/designCard/components/DesignCardReviewRoom.vue";
 import EditorCornerPocket from "./components/editor/EditorCornerPocket.vue";
 import EditorPane from "./components/editor/EditorPane.vue";
-import PackageTransferDialog from "./components/PackageTransferDialog.vue";
+import PackageTransferDialog from "./components/dialogs/PackageTransferDialog.vue";
 import NotePanel from "./components/note/NotePanel.vue";
-import RunErrorDialog from "./components/RunErrorDialog.vue";
+import RunErrorDialog from "./components/dialogs/RunErrorDialog.vue";
 import RuntimeLoadingScreen from "./components/RuntimeLoadingScreen.vue";
-import ScreeningDialog from "./components/ScreeningDialog.vue";
-import SettingsDialog from "./components/SettingsDialog.vue";
+import ScreeningDialog from "./components/dialogs/ScreeningDialog.vue";
+import SettingsDialog from "./components/dialogs/SettingsDialog.vue";
 import SidebarPanel from "./components/sidebar/SidebarPanel.vue";
-import StopAIConfirmDialog from "./components/StopAIConfirmDialog.vue";
+import StopAIConfirmDialog from "./components/dialogs/StopAIConfirmDialog.vue";
 import TopBar from "./components/TopBar.vue";
-import UpdateRestartDialog from "./components/UpdateRestartDialog.vue";
+import UpdateRestartDialog from "./components/dialogs/UpdateRestartDialog.vue";
 import { usePlotWorkspace } from "./features/plot/model/workspace/usePlotWorkspace";
 import { useTheme } from "./composables/useTheme";
 
