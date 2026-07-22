@@ -78,7 +78,9 @@ describe("useScriptWorkspaceMachine integration", () => {
     const repository = createFakeScriptRepository();
     const isSyncPaused = ref(true);
     const { machine, wrapper } = mountScriptWorkspaceMachine({ repository, isSyncPaused });
+    isSyncPaused.value = false;
     await machine.syncWorkspace("main.py");
+    isSyncPaused.value = true;
     machine.updateCode("print('paused')");
 
     await vi.advanceTimersByTimeAsync(1000);

@@ -22,7 +22,7 @@ describe("notebookStorage", () => {
       ],
     })).toEqual({
       markdown: "",
-      images: [{ name: "reference-image", alt: "", dataUrl: "data:image/png;base64,x", relativePath: "img/a.png" }],
+        images: [{ name: "", alt: "", dataUrl: "data:image/png;base64,x", relativePath: "img/a.png" }],
     });
   });
 

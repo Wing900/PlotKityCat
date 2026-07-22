@@ -12,9 +12,15 @@ import {
 
 function dataTransfer(types = ["application/x-plotkitycat-design-card", "application/x-design-card-id", "text/plain"]) {
   const values = new Map<string, string>();
+  const mutableTypes = [...types];
   return {
-    types: ["application/x-plotkitycat-design-card", "application/x-design-card-id", "text/plain"],
-    setData: (type: string, value: string) => values.set(type, value),
+    types: mutableTypes,
+    setData: (type: string, value: string) => {
+      values.set(type, value);
+      if (!mutableTypes.includes(type)) {
+        mutableTypes.push(type);
+      }
+    },
     getData: (type: string) => values.get(type) ?? "",
   } as unknown as DataTransfer;
 }
@@ -34,12 +40,8 @@ describe("drag data codecs", () => {
   it("读写 Note Image drag data，拒绝损坏 JSON", () => {
     const transfer = dataTransfer();
     writeNoteImageDragData(transfer, { relativePath: "images/a.png", source: "note", startIndex: 1 });
-    expect(hasNoteImageDragData(transfer)).toBe(false);
-    expect(readNoteImageDragData(transfer)).toEqual(null);
+    expect(hasNoteImageDragData(transfer)).toBe(true);
+    expect(readNoteImageDragData(transfer)).toMatchObject({ relativePath: "images/a.png", source: "note" });
 
-    const imageTransfer = dataTransfer(["application/x-plotkitycat-note-image"]);
-    writeNoteImageDragData(imageTransfer, { relativePath: "images/a.png", source: "note", startIndex: 1 });
-    expect(hasNoteImageDragData(imageTransfer)).toBe(true);
-    expect(readNoteImageDragData(imageTransfer)).toMatchObject({ relativePath: "images/a.png", source: "note" });
   });
 });

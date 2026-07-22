@@ -26,5 +26,6 @@ export function mountScriptWorkspaceMachine(options: {
     },
   });
 
-  return { wrapper: mount(component), machine, onError };
+  const wrapper = mount(component);
+  return { wrapper, machine, onError };
 }

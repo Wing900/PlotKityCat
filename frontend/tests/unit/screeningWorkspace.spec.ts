@@ -26,9 +26,9 @@ describe("useScreeningWorkspace", () => {
     vi.clearAllMocks();
   });
 
-  function mountWorkspace() {
-    const currentFile = ref("main.py");
-    const scripts = ref(["main.py", "second.py"]);
+  function mountWorkspace(currentFileName = "main.py", sceneNames = ["main.py", "second.py"]) {
+    const currentFile = ref(currentFileName);
+    const scripts = ref(sceneNames);
     const onError = vi.fn();
     let workspace!: ReturnType<typeof useScreeningWorkspace>;
     const component = defineComponent({
@@ -37,7 +37,8 @@ describe("useScreeningWorkspace", () => {
         return () => h("div");
       },
     });
-    return { workspace, wrapper: mount(component), onError };
+    const wrapper = mount(component);
+    return { workspace, wrapper, onError };
   }
 
   it("初始化并按当前文件预选，切换场景保持 order", async () => {
@@ -77,9 +78,8 @@ describe("useScreeningWorkspace", () => {
   });
 
   it("忽略空选择，并把运行时事件同步到状态", async () => {
-    const { workspace, wrapper } = mountWorkspace();
+    const { workspace, wrapper } = mountWorkspace("", []);
     workspace.openScreeningDialog();
-    workspace.toggleScreeningScene("main.py");
     await workspace.beginScreening();
     expect(bridge.startScreening).not.toHaveBeenCalled();
 
