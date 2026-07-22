@@ -4,6 +4,7 @@ import type {
   AISubscriptionStatus,
   AIServiceMode,
 } from "../features/ai/services/aiTypes";
+import { openSponsorPage, SPONSOR_URL } from "../../lib/help";
 
 const props = defineProps<{
   open: boolean;
@@ -126,18 +127,24 @@ function updateField(field: "url" | "key" | "model", value: string) {
             </span>
           </button>
 
-          <button
+          <div
             class="ai-mode-card free"
             :class="{ active: settings.mode === 'free' }"
-            type="button"
             @click="updateMode('free')"
           >
             <span class="ai-mode-check" aria-hidden="true"></span>
             <span class="ai-mode-copy">
               <strong>免费体验</strong>
-              <small>免费 AI 额度，支持我们让它延续更久</small>
+              <small>
+                免费 AI 额度，
+                <a
+                  class="ai-support-link"
+                  :href="SPONSOR_URL"
+                  @click.stop.prevent="openSponsorPage"
+                >支持我们让它延续更久</a>
+              </small>
             </span>
-          </button>
+          </div>
         </div>
 
         <div class="create-dialog-actions">

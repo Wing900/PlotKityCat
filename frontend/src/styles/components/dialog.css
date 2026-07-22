@@ -170,6 +170,10 @@
   margin-top: 10px;
 }
 
+.ai-mode-card.free {
+  cursor: pointer;
+}
+
 .ai-mode-card.active .ai-mode-check::after {
   opacity: 1;
 }
@@ -197,6 +201,16 @@
   color: var(--muted);
   font-size: 0.78rem;
   letter-spacing: 0.02em;
+}
+
+.ai-support-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ai-support-link:hover {
+  opacity: 0.62;
 }
 
 .ai-mode-check {
