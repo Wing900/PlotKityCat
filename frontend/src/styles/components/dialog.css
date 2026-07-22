@@ -165,6 +165,11 @@
   padding-bottom: 0;
 }
 
+.ai-mode-card.subscription,
+.ai-mode-card.free {
+  margin-top: 10px;
+}
+
 .ai-mode-card.active .ai-mode-check::after {
   opacity: 1;
 }

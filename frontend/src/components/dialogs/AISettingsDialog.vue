@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import type {
   AIProviderSettings,
   AISubscriptionStatus,
@@ -18,7 +19,10 @@ const emit = defineEmits<{
   "update:settings": [settings: AIProviderSettings];
 }>();
 
+const previewMode = ref<"free" | AIServiceMode>("free");
+
 function updateMode(mode: AIServiceMode) {
+  previewMode.value = mode;
   emit("update:settings", {
     ...props.settings,
     mode,
@@ -30,6 +34,10 @@ function updateField(field: "url" | "key" | "model", value: string) {
     ...props.settings,
     [field]: value,
   });
+}
+
+function selectFreePreview() {
+  previewMode.value = "free";
 }
 </script>
 
@@ -47,7 +55,7 @@ function updateField(field: "url" | "key" | "model", value: string) {
         <div class="ai-settings-body">
           <button
             class="ai-mode-card"
-            :class="{ active: settings.mode === 'custom' }"
+            :class="{ active: previewMode === 'custom' }"
             type="button"
             @click="updateMode('custom')"
           >
@@ -95,7 +103,7 @@ function updateField(field: "url" | "key" | "model", value: string) {
 
           <button
             class="ai-mode-card subscription"
-            :class="{ active: settings.mode === 'subscription' }"
+            :class="{ active: previewMode === 'subscription' }"
             type="button"
             @click="updateMode('subscription')"
           >
@@ -123,6 +131,19 @@ function updateField(field: "url" | "key" | "model", value: string) {
                 <span v-else class="ai-inline-status">已订阅</span>
               </strong>
               <small>订阅提供 AI 额度，适合不愿折腾 API、想开箱即用的老师</small>
+            </span>
+          </button>
+
+          <button
+            class="ai-mode-card free"
+            :class="{ active: previewMode === 'free' }"
+            type="button"
+            @click="selectFreePreview"
+          >
+            <span class="ai-mode-check" aria-hidden="true"></span>
+            <span class="ai-mode-copy">
+              <strong>免费体验</strong>
+              <small>免费 AI 额度，支持我们让它延续更久</small>
             </span>
           </button>
         </div>
