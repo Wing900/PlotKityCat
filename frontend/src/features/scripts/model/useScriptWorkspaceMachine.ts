@@ -22,9 +22,16 @@ export function useScriptWorkspaceMachine(
   onError: ErrorHandler,
   isRunning: Ref<boolean>,
   isSyncPaused?: Ref<boolean>,
+  dependencies?: {
+    repository?: ScriptWorkspaceRepository;
+    selectionStorage?: {
+      load: () => string;
+      save: (filename: string) => void;
+    };
+  },
 ) {
-  const repository = createScriptRepository() as ScriptWorkspaceRepository;
-  const selectionStorage = createScriptSelectionStorage();
+  const repository = dependencies?.repository ?? createScriptRepository() as ScriptWorkspaceRepository;
+  const selectionStorage = dependencies?.selectionStorage ?? createScriptSelectionStorage();
   const scripts = ref<string[]>([]);
   const workspaces = ref<WorkspaceInfoLike[]>([]);
   const currentWorkspace = ref("");
