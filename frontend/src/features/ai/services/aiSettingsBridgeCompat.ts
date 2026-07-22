@@ -25,7 +25,7 @@ export async function saveAISettings(settings: AIProviderSettings): Promise<AIPr
 
 export function createDefaultAISettings(): AIProviderSettings {
   return {
-    mode: "custom",
+    mode: "free",
     url: "",
     key: "",
     model: "",
@@ -34,7 +34,10 @@ export function createDefaultAISettings(): AIProviderSettings {
 
 function normalizeAISettings(value: Partial<AIProviderSettings> | null | undefined): AIProviderSettings {
   return {
-    mode: value?.mode === "subscription" ? "subscription" : "custom",
+    mode:
+      value?.mode === "free" || value?.mode === "subscription"
+        ? value.mode
+        : "custom",
     url: typeof value?.url === "string" ? value.url : "",
     key: typeof value?.key === "string" ? value.key : "",
     model: typeof value?.model === "string" ? value.model : "",

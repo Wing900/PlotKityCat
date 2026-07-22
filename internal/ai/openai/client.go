@@ -19,12 +19,13 @@ type Client struct {
 }
 
 type Request struct {
-	BaseURL      string
-	APIKey       string
-	Model        string
-	SystemPrompt string
-	UserPrompt   string
-	Images       []string
+	BaseURL       string
+	APIKey        string
+	Model         string
+	RequireAPIKey bool
+	SystemPrompt  string
+	UserPrompt    string
+	Images        []string
 }
 
 func NewClient() *Client {
@@ -37,7 +38,7 @@ func (c *Client) Generate(ctx context.Context, request Request) (string, error) 
 	baseURL := strings.TrimSpace(request.BaseURL)
 	apiKey := strings.TrimSpace(request.APIKey)
 	model := strings.TrimSpace(request.Model)
-	if baseURL == "" || apiKey == "" || model == "" {
+	if baseURL == "" || model == "" || (request.RequireAPIKey && apiKey == "") {
 		return "", fmt.Errorf("AI 请求缺少 URL / KEY / MODEL")
 	}
 
@@ -64,7 +65,9 @@ func (c *Client) Generate(ctx context.Context, request Request) (string, error) 
 	}
 	httpRequest.Header.Set("Content-Type", "application/json")
 	httpRequest.Header.Set("Accept", "text/event-stream")
-	httpRequest.Header.Set("Authorization", "Bearer "+apiKey)
+	if apiKey != "" {
+		httpRequest.Header.Set("Authorization", "Bearer "+apiKey)
+	}
 
 	response, err := c.httpClient.Do(httpRequest)
 	if err != nil {

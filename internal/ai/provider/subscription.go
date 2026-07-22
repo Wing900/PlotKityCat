@@ -32,12 +32,13 @@ func (c *SubscriptionClient) Chat(ctx context.Context, request ChatRequest) (str
 	}
 
 	return c.client.Generate(ctx, openai.Request{
-		BaseURL:      session.BaseURL,
-		APIKey:       session.Token,
-		Model:        firstNonEmptyString(session.Model, request.Settings.Model),
-		SystemPrompt: request.SystemPrompt,
-		UserPrompt:   request.UserPrompt,
-		Images:       request.Images,
+		BaseURL:       session.BaseURL,
+		APIKey:        session.Token,
+		Model:         firstNonEmptyString(session.Model, request.Settings.Model),
+		RequireAPIKey: true,
+		SystemPrompt:  request.SystemPrompt,
+		UserPrompt:    request.UserPrompt,
+		Images:        request.Images,
 	})
 }
 

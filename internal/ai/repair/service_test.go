@@ -15,8 +15,8 @@ type fakeLoader struct{ content string }
 func (l *fakeLoader) Load(_ string) string { return l.content }
 
 type fakeClient struct {
-	resp string
-	err  error
+	resp  string
+	err   error
 	calls int
 }
 
@@ -29,7 +29,7 @@ func (c *fakeClient) Chat(_ context.Context, _ provider.ChatRequest) (string, er
 }
 
 func newSvc(custom *fakeClient, sub *fakeClient) *Service {
-	return NewService(provider.NewRouter(custom, sub), &fakeLoader{content: "sys"})
+	return NewService(provider.NewRouter(&fakeClient{}, custom, sub), &fakeLoader{content: "sys"})
 }
 
 func TestRepairCode_StripsFence(t *testing.T) {

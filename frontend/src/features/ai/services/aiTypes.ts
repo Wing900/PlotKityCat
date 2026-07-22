@@ -1,4 +1,4 @@
-export type AIServiceMode = "custom" | "subscription";
+export type AIServiceMode = "free" | "custom" | "subscription";
 export type AIGenerationKind = "visualize";
 
 export type AIProviderSettings = {

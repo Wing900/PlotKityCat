@@ -5,6 +5,7 @@ import "context"
 type ServiceMode string
 
 const (
+	ModeFree         ServiceMode = "free"
 	ModeCustom       ServiceMode = "custom"
 	ModeSubscription ServiceMode = "subscription"
 )

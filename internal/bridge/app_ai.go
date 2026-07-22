@@ -6,7 +6,7 @@ import (
 
 func (a *App) GetAISettings() (AIProviderSettings, error) {
 	if a.aiSettingsStore == nil {
-		return AIProviderSettings{Mode: "custom"}, nil
+		return AIProviderSettings{Mode: "free"}, nil
 	}
 
 	value, err := a.aiSettingsStore.Load()

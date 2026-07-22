@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import type {
   AIProviderSettings,
   AISubscriptionStatus,
@@ -19,10 +18,7 @@ const emit = defineEmits<{
   "update:settings": [settings: AIProviderSettings];
 }>();
 
-const previewMode = ref<"free" | AIServiceMode>("free");
-
 function updateMode(mode: AIServiceMode) {
-  previewMode.value = mode;
   emit("update:settings", {
     ...props.settings,
     mode,
@@ -34,10 +30,6 @@ function updateField(field: "url" | "key" | "model", value: string) {
     ...props.settings,
     [field]: value,
   });
-}
-
-function selectFreePreview() {
-  previewMode.value = "free";
 }
 </script>
 
@@ -55,7 +47,7 @@ function selectFreePreview() {
         <div class="ai-settings-body">
           <button
             class="ai-mode-card"
-            :class="{ active: previewMode === 'custom' }"
+            :class="{ active: settings.mode === 'custom' }"
             type="button"
             @click="updateMode('custom')"
           >
@@ -103,7 +95,7 @@ function selectFreePreview() {
 
           <button
             class="ai-mode-card subscription"
-            :class="{ active: previewMode === 'subscription' }"
+            :class="{ active: settings.mode === 'subscription' }"
             type="button"
             @click="updateMode('subscription')"
           >
@@ -136,9 +128,9 @@ function selectFreePreview() {
 
           <button
             class="ai-mode-card free"
-            :class="{ active: previewMode === 'free' }"
+            :class="{ active: settings.mode === 'free' }"
             type="button"
-            @click="selectFreePreview"
+            @click="updateMode('free')"
           >
             <span class="ai-mode-check" aria-hidden="true"></span>
             <span class="ai-mode-copy">

@@ -22,6 +22,7 @@ type Service struct {
 func NewService(subscriptionService *subscription.Service) *Service {
 	prompts := NewPromptRepository(filepath.Join("internal", "designcards", "ai", "prompts"))
 	router := provider.NewRouter(
+		provider.NewFreeClient(),
 		provider.NewCustomClient(),
 		provider.NewSubscriptionClient(subscriptionService),
 	)

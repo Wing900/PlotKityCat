@@ -9,9 +9,9 @@ import (
 )
 
 type fakeChat struct {
-	resp string
-	err  error
-	calls int
+	resp    string
+	err     error
+	calls   int
 	lastReq ChatRequest
 }
 
@@ -27,9 +27,17 @@ func (c *fakeChat) Chat(_ context.Context, req ChatRequest) (string, error) {
 func TestRouter_DispatchByMode(t *testing.T) {
 	custom := &fakeChat{resp: "from-custom"}
 	sub := &fakeChat{resp: "from-subscription"}
-	r := NewRouter(custom, sub)
+	free := &fakeChat{resp: "from-free"}
+	r := NewRouter(free, custom, sub)
 
-	out, err := r.Chat(context.Background(), ChatRequest{Settings: Settings{Mode: ModeCustom}})
+	out, err := r.Chat(context.Background(), ChatRequest{Settings: Settings{Mode: ModeFree}})
+	assert.NoError(t, err)
+	assert.Equal(t, "from-free", out)
+	assert.Equal(t, 1, free.calls)
+	assert.Equal(t, 0, custom.calls)
+	assert.Equal(t, 0, sub.calls)
+
+	out, err = r.Chat(context.Background(), ChatRequest{Settings: Settings{Mode: ModeCustom}})
 	assert.NoError(t, err)
 	assert.Equal(t, "from-custom", out)
 	assert.Equal(t, 1, custom.calls)
@@ -44,14 +52,14 @@ func TestRouter_DispatchByMode(t *testing.T) {
 
 func TestRouter_PropagatesError(t *testing.T) {
 	custom := &fakeChat{err: errors.New("network down")}
-	r := NewRouter(custom, &fakeChat{})
+	r := NewRouter(&fakeChat{}, custom, &fakeChat{})
 	_, err := r.Chat(context.Background(), ChatRequest{Settings: Settings{Mode: ModeCustom}})
 	assert.ErrorContains(t, err, "network down")
 }
 
 func TestRouter_PassesRequestThrough(t *testing.T) {
 	custom := &fakeChat{resp: "ok"}
-	r := NewRouter(custom, &fakeChat{})
+	r := NewRouter(&fakeChat{}, custom, &fakeChat{})
 	req := ChatRequest{Settings: Settings{Mode: ModeCustom, Model: "gpt-x"}, SystemPrompt: "sys", UserPrompt: "usr"}
 	r.Chat(context.Background(), req)
 	assert.Equal(t, "gpt-x", custom.lastReq.Settings.Model)

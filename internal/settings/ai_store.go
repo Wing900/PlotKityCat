@@ -70,7 +70,7 @@ func (s *AIStore) Save(value AIProviderSettings) (AIProviderSettings, error) {
 
 func defaultAIProviderSettings() AIProviderSettings {
 	return AIProviderSettings{
-		Mode:  "custom",
+		Mode:  "free",
 		URL:   "",
 		Key:   "",
 		Model: "",
@@ -79,7 +79,7 @@ func defaultAIProviderSettings() AIProviderSettings {
 
 func normalizeAIProviderSettings(value AIProviderSettings) AIProviderSettings {
 	mode := strings.TrimSpace(value.Mode)
-	if mode != "subscription" {
+	if mode != "free" && mode != "subscription" {
 		mode = "custom"
 	}
 

@@ -17,6 +17,11 @@ func TestNormalize_PreservesSubscriptionMode(t *testing.T) {
 	assert.Equal(t, "u", got.URL)
 }
 
+func TestNormalize_PreservesFreeMode(t *testing.T) {
+	got := normalizeAIProviderSettings(AIProviderSettings{Mode: "free"})
+	assert.Equal(t, "free", got.Mode)
+}
+
 func TestNormalize_NonSubscriptionBecomesCustom(t *testing.T) {
 	assert.Equal(t, "custom", normalizeAIProviderSettings(AIProviderSettings{Mode: "weird"}).Mode)
 	assert.Equal(t, "custom", normalizeAIProviderSettings(AIProviderSettings{Mode: "custom"}).Mode)
@@ -34,7 +39,7 @@ func TestNormalize_TrimsWhitespace(t *testing.T) {
 
 func TestDefaultAIProviderSettings(t *testing.T) {
 	got := defaultAIProviderSettings()
-	assert.Equal(t, "custom", got.Mode)
+	assert.Equal(t, "free", got.Mode)
 	assert.Empty(t, got.URL)
 	assert.Empty(t, got.Key)
 	assert.Empty(t, got.Model)
