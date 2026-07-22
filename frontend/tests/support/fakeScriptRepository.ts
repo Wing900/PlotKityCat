@@ -15,7 +15,7 @@ export function createFakeScriptRepository(
   initialWorkspaces: Record<string, FakeWorkspace> = defaultWorkspaces(),
 ): FakeScriptRepository {
   const repository = {
-    workspaces: structuredClone(initialWorkspaces),
+    workspaces: cloneWorkspaces(initialWorkspaces),
     currentWorkspace: Object.keys(initialWorkspaces)[0] ?? "workspace-a",
   } as FakeScriptRepository;
 
@@ -109,4 +109,13 @@ function defaultWorkspaces(): Record<string, FakeWorkspace> {
       order: ["other.py"],
     },
   };
+}
+
+function cloneWorkspaces(workspaces: Record<string, FakeWorkspace>) {
+  return Object.fromEntries(
+    Object.entries(workspaces).map(([name, workspace]) => [name, {
+      files: { ...workspace.files },
+      order: [...workspace.order],
+    }]),
+  );
 }
