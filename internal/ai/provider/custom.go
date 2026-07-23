@@ -19,6 +19,7 @@ func (c *CustomClient) Chat(ctx context.Context, request ChatRequest) (string, e
 		BaseURL:       request.Settings.URL,
 		APIKey:        request.Settings.Key,
 		Model:         request.Settings.Model,
+		Mode:          string(ModeCustom),
 		RequireAPIKey: true,
 		SystemPrompt:  request.SystemPrompt,
 		UserPrompt:    request.UserPrompt,

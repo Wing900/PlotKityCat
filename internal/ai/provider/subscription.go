@@ -35,6 +35,7 @@ func (c *SubscriptionClient) Chat(ctx context.Context, request ChatRequest) (str
 		BaseURL:       session.BaseURL,
 		APIKey:        session.Token,
 		Model:         firstNonEmptyString(session.Model, request.Settings.Model),
+		Mode:          string(ModeSubscription),
 		RequireAPIKey: true,
 		SystemPrompt:  request.SystemPrompt,
 		UserPrompt:    request.UserPrompt,

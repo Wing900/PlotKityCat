@@ -23,11 +23,12 @@ func NewFreeClient() *FreeClient {
 
 func (c *FreeClient) Chat(ctx context.Context, request ChatRequest) (string, error) {
 	return c.client.Generate(ctx, openai.Request{
-		BaseURL:      freeBaseURL(),
-		Model:        freeModel,
-		SystemPrompt: request.SystemPrompt,
-		UserPrompt:   request.UserPrompt,
-		Images:       request.Images,
+		BaseURL:       freeBaseURL(),
+		Model:         freeModel,
+		Mode:          string(ModeFree),
+		SystemPrompt:  request.SystemPrompt,
+		UserPrompt:    request.UserPrompt,
+		Images:        request.Images,
 	})
 }
 

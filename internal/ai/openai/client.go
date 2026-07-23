@@ -22,6 +22,7 @@ type Request struct {
 	BaseURL       string
 	APIKey        string
 	Model         string
+	Mode          string
 	RequireAPIKey bool
 	SystemPrompt  string
 	UserPrompt    string
@@ -79,10 +80,7 @@ func (c *Client) Generate(ctx context.Context, request Request) (string, error) 
 		var errBody bytes.Buffer
 		_, _ = errBody.ReadFrom(response.Body)
 		message := strings.TrimSpace(errBody.String())
-		if message == "" {
-			message = response.Status
-		}
-		return "", fmt.Errorf("AI 服务返回失败：%s", message)
+		return "", friendlyError(response.StatusCode, message, request.Mode)
 	}
 
 	content, err := readChatContent(response.Body, response.Header.Get("Content-Type"))
@@ -182,4 +180,47 @@ func readStreamingChatContent(body io.Reader) (string, error) {
 	}
 
 	return builder.String(), nil
+}
+
+// friendlyError maps an upstream HTTP failure to a user-facing message that
+// matches the AI mode (free / custom / subscription). Unknown modes and
+// unlisted status codes fall back to the generic "AI 服务返回失败" form.
+func friendlyError(statusCode int, body, mode string) error {
+	if msg, ok := modeErrorMessage(statusCode, mode); ok {
+		return fmt.Errorf("%s", msg)
+	}
+	if body == "" {
+		return fmt.Errorf("AI 服务返回失败：%d", statusCode)
+	}
+	return fmt.Errorf("AI 服务返回失败：%s", body)
+}
+
+func modeErrorMessage(statusCode int, mode string) (string, bool) {
+	table, ok := errorMessagesByMode[mode]
+	if !ok {
+		return "", false
+	}
+	msg, ok := table[statusCode]
+	return msg, ok
+}
+
+var errorMessagesByMode = map[string]map[int]string{
+	"free": {
+		http.StatusTooManyRequests:  "免费额度暂时用完，过段时间再试试。",
+		http.StatusForbidden:        "免费模型配置异常，请更新客户端。",
+		http.StatusNotFound:         "免费服务暂未开放。",
+		http.StatusServiceUnavailable: "免费服务暂时不可用，请稍后再试。",
+	},
+	"custom": {
+		http.StatusTooManyRequests:    "请求过于频繁，请稍后再试。",
+		http.StatusForbidden:          "请求被拒绝（鉴权或模型不被允许）。",
+		http.StatusNotFound:           "服务地址不存在，请检查 URL。",
+		http.StatusServiceUnavailable: "服务暂时不可用，请稍后再试。",
+	},
+	"subscription": {
+		http.StatusTooManyRequests:    "订阅额度暂时用完，请稍后再试。",
+		http.StatusForbidden:          "订阅鉴权失败，请刷新订阅状态。",
+		http.StatusNotFound:           "订阅服务地址不存在。",
+		http.StatusServiceUnavailable: "订阅服务暂时不可用，请稍后再试。",
+	},
 }
