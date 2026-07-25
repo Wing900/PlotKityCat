@@ -15,6 +15,10 @@ function makeOpts(overrides: Record<string, unknown> = {}) {
       switchWorkspace: vi.fn(async (name: string) => ({ currentFile: "", scripts: [], currentWorkspace: name })),
     },
     saveCurrentScript: vi.fn(async () => undefined),
+    workspaces: ref([
+      { name: "ws-a", sceneCount: 1 },
+      { name: "新手引导", sceneCount: 1 },
+    ]),
     workspacePhase: ref<WorkspacePhase>("idle"),
     ...overrides,
   };

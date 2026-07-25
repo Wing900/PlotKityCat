@@ -80,6 +80,13 @@ type InitSnapshot struct {
 	Workspace   WorkspaceSnapshot `json:"workspace"`
 }
 
+type OnboardingState struct {
+	Version   string `json:"version"`
+	Status    string `json:"status"`
+	LastStep  int    `json:"lastStep"`
+	UpdatedAt string `json:"updatedAt"`
+}
+
 type ImportSceneResult struct {
 	Cancelled bool              `json:"cancelled"`
 	Workspace WorkspaceSnapshot `json:"workspace"`
@@ -208,10 +215,10 @@ type DesignCardStartedEvent struct {
 }
 
 type DesignCardSucceededEvent struct {
-	SessionID string      `json:"sessionId"`
-	SceneName string      `json:"sceneName"`
-	Card      DesignCard  `json:"card"`
-	Source    string      `json:"source"`
+	SessionID string     `json:"sessionId"`
+	SceneName string     `json:"sceneName"`
+	Card      DesignCard `json:"card"`
+	Source    string     `json:"source"`
 }
 
 type DesignCardFailedEvent struct {

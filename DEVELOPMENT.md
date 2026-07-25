@@ -27,6 +27,13 @@ wails dev
 
 应用版本唯一来源为 `version.json` 中的 `appVersion`。构建与发布脚本默认都读取这里的值。
 
+## 本地状态
+
+- `config/app-state.json` 保存版本化的应用状态，新手引导使用 `onboarding` 字段。
+- 新发布包不携带 `config/`；首次启动缺少该文件时，引导状态为 `unseen`。
+- 同一引导版本依次记录 `started`、`dismissed`、`completed`，`completed` 为终态。
+- `Scripts/新手引导/` 保存教程内容，状态与内容采用独立生命周期。
+
 ## Runtime
 
 项目运行依赖便携 Python runtime。约定如下：
@@ -112,13 +119,13 @@ wails dev
 - `RUNTIME_BUILD.md`
 - `version.json`
 - `runtime.version.json`
+- `Scripts/` 下随产品发布的预制工作区
 
 不应跟踪：
 
 - `config/`
 - `runtime/`
 - `runtime.tmp/`
-- `Scripts/`
 - `build/bin/`
 - `build/release/`
 - `build/update/`

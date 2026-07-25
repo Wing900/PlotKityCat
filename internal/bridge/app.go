@@ -6,6 +6,7 @@ import (
 
 	"plotkitycat/internal/ai"
 	"plotkitycat/internal/aicode/workflow"
+	"plotkitycat/internal/appstate"
 	"plotkitycat/internal/codeversions"
 	"plotkitycat/internal/designcards"
 	designai "plotkitycat/internal/designcards/ai"
@@ -28,6 +29,7 @@ type App struct {
 	ctx                  context.Context
 	aiService            *ai.Service
 	aiWorkflow           *workflow.Service
+	appStateStore        *appstate.Store
 	codeVersionStore     *codeversions.Store
 	designCardService    *designcards.Service
 	designCardSession    *session.Service
@@ -52,6 +54,7 @@ func NewApp() *App {
 	screeningZoomService := screeningzoom.NewService()
 	app := &App{
 		aiService:            ai.NewService(subscriptionService),
+		appStateStore:        appstate.NewStore(),
 		codeVersionStore:     codeversions.NewStore(fileStore),
 		designCardService:    designcards.NewService(designCardStore, designai.NewService(subscriptionService)),
 		deviceService:        deviceService,

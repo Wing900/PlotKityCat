@@ -235,6 +235,7 @@ export function usePlotWorkspace() {
     deleteScript: scriptOps.deleteScript,
     deleteWorkspace: scriptOps.deleteWorkspace,
     deletingScriptName: scriptWorkspace.deletingScriptName,
+    enterOnboardingWorkspace: scriptOps.enterOnboardingWorkspace,
     environmentStatus: runtime.environmentStatus,
     exportSelectedWorkspaces: workspacePackageTransfer.exportSelectedWorkspaces,
     exportCurrentScenePackage: packageTransfer.exportCurrentScenePackage,

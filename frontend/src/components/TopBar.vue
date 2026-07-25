@@ -52,6 +52,7 @@ function closeWindow() {
         class="run-button"
         type="button"
         :class="{ stopping: isRunning }"
+        data-tour="run-button"
         @click="isRunning ? emit('stop') : emit('run')"
       >
         <span class="run-icon" aria-hidden="true"></span>

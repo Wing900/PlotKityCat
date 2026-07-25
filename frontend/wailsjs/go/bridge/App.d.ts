@@ -36,6 +36,8 @@ export function GetDesignCard(arg1:string,arg2:string):Promise<bridge.DesignCard
 
 export function GetEnvironmentStatus():Promise<bridge.EnvironmentStatus>;
 
+export function GetOnboardingState():Promise<bridge.OnboardingState>;
+
 export function GetScreeningState():Promise<bridge.ScreeningSessionState>;
 
 export function GetScriptContent(arg1:string):Promise<bridge.ScriptDocument>;
@@ -113,3 +115,5 @@ export function ToggleScreeningDraw():Promise<void>;
 export function ToggleScreeningLiveZoom():Promise<void>;
 
 export function UpdateDesignCardPlan(arg1:string,arg2:string,arg3:string):Promise<bridge.DesignCard>;
+
+export function UpdateOnboardingState(arg1:string,arg2:string,arg3:number):Promise<bridge.OnboardingState>;

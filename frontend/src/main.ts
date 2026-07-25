@@ -1,6 +1,8 @@
 import { createApp } from "vue";
 import App from "./App.vue";
 import { installZoomGuards } from "./lib/zoomGuards";
+import "driver.js/dist/driver.css";
+import "./features/onboarding/tour.css";
 import "./styles/fonts.css";
 import "./styles/tokens.css";
 import "./styles/base.css";

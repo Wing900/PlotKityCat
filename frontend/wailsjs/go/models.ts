@@ -703,6 +703,24 @@ export namespace bridge {
 	        this.dataUrl = source["dataUrl"];
 	    }
 	}
+	export class OnboardingState {
+	    version: string;
+	    status: string;
+	    lastStep: number;
+	    updatedAt: string;
+
+	    static createFrom(source: any = {}) {
+	        return new OnboardingState(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.version = source["version"];
+	        this.status = source["status"];
+	        this.lastStep = source["lastStep"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	}
 	export class PackageTransferResult {
 	    path: string;
 	    sceneName: string;
@@ -875,4 +893,3 @@ export namespace bridge {
 	}
 
 }
-

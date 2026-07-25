@@ -1,5 +1,9 @@
 import type { Ref } from "vue";
-import type { WorkspaceSnapshotLike } from "./scriptWorkspaceTypes";
+import { ONBOARDING_WORKSPACE_NAME } from "../../onboarding/onboardingTemplate";
+import type {
+  WorkspaceInfoLike,
+  WorkspaceSnapshotLike,
+} from "./scriptWorkspaceTypes";
 import {
   getErrorMessage,
   withTimeout,
@@ -23,6 +27,7 @@ type WorkspaceActionsOptions = {
   onError: ErrorHandler;
   repository: WorkspaceActionsRepository;
   saveCurrentScript: () => Promise<void>;
+  workspaces: Ref<WorkspaceInfoLike[]>;
   workspacePhase: Ref<WorkspacePhase>;
 };
 
@@ -117,9 +122,37 @@ export function useWorkspaceActions(options: WorkspaceActionsOptions) {
     }
   }
 
+  // 新手引导是 Scripts/ 下随应用发布的标准工作区，此处只执行通用切换。
+  async function enterOnboardingWorkspace() {
+    const templateExists = options.workspaces.value.some(
+      (workspace) => workspace.name === ONBOARDING_WORKSPACE_NAME,
+    );
+    if (!templateExists || options.workspacePhase.value !== "idle") {
+      return false;
+    }
+
+    options.workspacePhase.value = "syncing";
+
+    try {
+      await options.saveCurrentScript();
+      const snapshot = await withTimeout(
+        options.repository.switchWorkspace(ONBOARDING_WORKSPACE_NAME),
+        "进入新手引导工作区超时",
+      );
+      options.applyWorkspaceSnapshot(snapshot, { preserveDirtyCurrent: false });
+      return true;
+    } catch (error) {
+      console.warn("[onboarding] 切换教程工作区失败", error);
+      return false;
+    } finally {
+      options.workspacePhase.value = "idle";
+    }
+  }
+
   return {
     createWorkspace,
     deleteWorkspace,
+    enterOnboardingWorkspace,
     renameWorkspace,
     switchWorkspace,
   };

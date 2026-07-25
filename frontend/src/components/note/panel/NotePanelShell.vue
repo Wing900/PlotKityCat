@@ -27,6 +27,11 @@ const notebookRoot = defineModel<HTMLElement | null>("notebookRoot", { default: 
       { collapsed: !isOpen, switching: isSceneSwitching },
     ]"
   >
+    <div
+      class="onboarding-focus-region onboarding-focus-region-note"
+      data-tour="note-panel"
+      aria-hidden="true"
+    />
     <div class="notebook-spine">
       <NotebookDividerHandle
         :layout-mode="layoutMode"

@@ -70,6 +70,10 @@ export function GetEnvironmentStatus() {
   return window['go']['bridge']['App']['GetEnvironmentStatus']();
 }
 
+export function GetOnboardingState() {
+  return window['go']['bridge']['App']['GetOnboardingState']();
+}
+
 export function GetScreeningState() {
   return window['go']['bridge']['App']['GetScreeningState']();
 }
@@ -224,4 +228,8 @@ export function ToggleScreeningLiveZoom() {
 
 export function UpdateDesignCardPlan(arg1, arg2, arg3) {
   return window['go']['bridge']['App']['UpdateDesignCardPlan'](arg1, arg2, arg3);
+}
+
+export function UpdateOnboardingState(arg1, arg2, arg3) {
+  return window['go']['bridge']['App']['UpdateOnboardingState'](arg1, arg2, arg3);
 }

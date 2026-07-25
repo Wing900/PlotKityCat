@@ -58,8 +58,9 @@ export function useWorkspaceLifecycle(options: WorkspaceLifecycleOptions) {
       options.scriptWorkspace.applyWorkspaceSnapshot(snapshot.workspace);
       options.noteWorkspace.hydrateFromScriptDocument(snapshot.workspace?.document ?? {});
       await options.scriptWorkspace.restoreLastSelection();
-      await options.refreshSubscriptionStatus(false);
       options.runtime.finishInitialization("Runtime ready");
+      // Subscription 属于非关键远程状态；后台刷新，避免网络超时阻塞首屏与 Onboarding。
+      void options.refreshSubscriptionStatus(false);
     } catch (error) {
       const message = getErrorMessage(error);
       options.onError(message);

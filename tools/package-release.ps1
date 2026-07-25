@@ -1,6 +1,5 @@
 param(
-    [string]$Version = "",
-    [switch]$IncludeScripts = $true
+    [string]$Version = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -49,6 +48,80 @@ function Get-AppVersionFromFile {
     return $value.Trim()
 }
 
+function Assert-WorkspaceTemplate {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$WorkspacePath,
+        [switch]$RequireNonEmptyNote
+    )
+
+    $workspaceName = Split-Path -Leaf $WorkspacePath
+    $manifestPath = Join-Path $WorkspacePath ".plotkitycat-scenes.json"
+    if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+        throw "Missing workspace scene manifest: $manifestPath"
+    }
+
+    $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+    $sceneNames = @($manifest.scenes)
+    if ($sceneNames.Count -eq 0) {
+        throw "Workspace scene manifest has no scenes: $manifestPath"
+    }
+
+    foreach ($sceneNameValue in $sceneNames) {
+        $sceneName = [string]$sceneNameValue
+        if (
+            [string]::IsNullOrWhiteSpace($sceneName) -or
+            $sceneName -ne [IO.Path]::GetFileName($sceneName)
+        ) {
+            throw "Invalid scene name in workspace ${workspaceName}: $sceneName"
+        }
+
+        $scenePath = Join-Path $WorkspacePath $sceneName
+        $mainPath = Join-Path $scenePath "main.py"
+        $notePath = Join-Path $scenePath "note.md"
+        if (-not (Test-Path -LiteralPath $mainPath -PathType Leaf)) {
+            throw "Missing scene code: $mainPath"
+        }
+        if (-not (Test-Path -LiteralPath $notePath -PathType Leaf)) {
+            throw "Missing scene note: $notePath"
+        }
+        if ($RequireNonEmptyNote -and (Get-Item -LiteralPath $notePath).Length -eq 0) {
+            throw "Onboarding scene note is empty: $notePath"
+        }
+    }
+}
+
+function Assert-ScriptsCatalog {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ScriptsPath
+    )
+
+    if (-not (Test-Path -LiteralPath $ScriptsPath -PathType Container)) {
+        throw "Missing Scripts directory: $ScriptsPath"
+    }
+
+    $workspaceDirectories = @(Get-ChildItem -LiteralPath $ScriptsPath -Directory)
+    if ($workspaceDirectories.Count -eq 0) {
+        throw "Scripts directory has no workspaces: $ScriptsPath"
+    }
+
+    $hasOnboardingWorkspace = $false
+    foreach ($workspaceDirectory in $workspaceDirectories) {
+        $isOnboardingWorkspace = $workspaceDirectory.Name -eq "新手引导"
+        if ($isOnboardingWorkspace) {
+            $hasOnboardingWorkspace = $true
+        }
+        Assert-WorkspaceTemplate `
+            -WorkspacePath $workspaceDirectory.FullName `
+            -RequireNonEmptyNote:$isOnboardingWorkspace
+    }
+
+    if (-not $hasOnboardingWorkspace) {
+        throw "Missing onboarding workspace: $(Join-Path $ScriptsPath '新手引导')"
+    }
+}
+
 if ([string]::IsNullOrWhiteSpace($Version)) {
     $Version = Get-AppVersionFromFile -Path $versionFilePath
 }
@@ -78,6 +151,8 @@ if (-not (Test-Path (Join-Path $runtime7ZipDir "7za.dll"))) {
     throw "Missing runtime extractor DLL: $(Join-Path $runtime7ZipDir '7za.dll')"
 }
 
+Assert-ScriptsCatalog -ScriptsPath $scriptsDir
+
 if (Test-Path $releaseRoot) {
     Remove-Item -LiteralPath $releaseRoot -Recurse -Force
 }
@@ -96,9 +171,8 @@ Copy-Item -LiteralPath (Join-Path $runtime7ZipDir "7za.dll") -Destination (Join-
 New-Item -ItemType Directory -Path (Join-Path $releaseRoot "resources/screeningzoom") -Force | Out-Null
 Copy-Item -LiteralPath $screeningZoomExe -Destination (Join-Path $releaseRoot "resources/screeningzoom/zoomit.exe") -Force
 
-if ($IncludeScripts -and (Test-Path $scriptsDir)) {
-    Copy-Item -LiteralPath $scriptsDir -Destination (Join-Path $releaseRoot "Scripts") -Recurse -Force
-}
+Copy-Item -LiteralPath $scriptsDir -Destination (Join-Path $releaseRoot "Scripts") -Recurse -Force
+Assert-ScriptsCatalog -ScriptsPath (Join-Path $releaseRoot "Scripts")
 
 Compress-Archive -LiteralPath $releaseRoot -DestinationPath $releaseZip -CompressionLevel Optimal
 

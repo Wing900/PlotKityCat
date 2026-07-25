@@ -21,9 +21,15 @@ import TopBar from "./components/TopBar.vue";
 import UpdateRestartDialog from "./components/dialogs/UpdateRestartDialog.vue";
 import { usePlotWorkspace } from "./features/plot/model/workspace/usePlotWorkspace";
 import { useTheme } from "./composables/useTheme";
+import { useOnboarding } from "./features/onboarding/useOnboarding";
 
 const workspace = reactive(usePlotWorkspace());
 const theme = reactive(useTheme());
+
+const onboarding = useOnboarding({
+  enterOnboardingWorkspace: workspace.enterOnboardingWorkspace,
+  prepareOnboardingLayout: workspace.showSplitPane,
+});
 const isSceneSwitching = ref(false);
 const isLoadingScreenVisible = ref(true);
 const isStopAIConfirmOpen = ref(false);
@@ -97,6 +103,11 @@ function handleLoadingScreenSettled() {
   }
 }
 
+function handleLoadingScreenLeft() {
+  // 主界面完全露出后再启动教程，避免 Welcome Card 与 Loading 退场动画重叠。
+  onboarding.scheduleFirstTourAfterReveal();
+}
+
 function handleStopAI() {
   // 按设计应弹 HIG 二次确认（停止有副作用——已进行的尝试会丢弃）
   isStopAIConfirmOpen.value = true;
@@ -132,12 +143,16 @@ function cancelStopAI() {
 
 onBeforeUnmount(() => {
   window.clearTimeout(sceneSwitchTimer);
+  onboarding.dispose();
 });
 </script>
 
 <template>
   <div class="app-shell">
-    <Transition name="runtime-loading-shell">
+    <Transition
+      name="runtime-loading-shell"
+      @after-leave="handleLoadingScreenLeft"
+    >
       <RuntimeLoadingScreen
         v-if="isLoadingScreenVisible"
         :active="workspace.isInitializing"

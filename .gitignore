@@ -7,7 +7,6 @@ build/release/
 build/update/
 /runtime/
 /runtime.tmp/
-/Scripts/
 *.exe
 *.dll
 *.zip

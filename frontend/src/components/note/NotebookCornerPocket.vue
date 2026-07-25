@@ -28,6 +28,7 @@ const emit = defineEmits<{
         class="ai-joint-btn"
         type="button"
         :disabled="disabled"
+        data-tour="ai-generate"
         @click="emit('generate')"
       >
         <NoteAIIcon name="generate" />

@@ -1,0 +1,138 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" width="100%" height="100%" style="background-color: #F9F9F7; font-family: system-ui, -apple-system, sans-serif; font-size: 13px; fill: #4A4A4A;">
+  <!-- 顶部标题区 -->
+  <g transform="translate(30, 40)">
+    <text x="0" y="5" font-size="18" font-weight="500" letter-spacing="1">球内接四棱锥最大体积模型</text>
+    <text x="0" y="22" font-size="12" fill="#888888">顶点在球心，底面四个顶点在球面上</text>
+    <line x1="0" y1="32" x2="940" y2="32" stroke="#E5E5E5" stroke-width="1"/>
+  </g>
+
+  <!-- 左侧：3D 几何空间 -->
+  <g transform="translate(30, 100)">
+    <rect width="450" height="360" fill="none" stroke="#E5E5E5" stroke-width="1.2" rx="4"/>
+    <text x="15" y="25" font-size="12" fill="#888888" letter-spacing="0.5">3D 空间结构 (h = 0.577)</text>
+    
+    <!-- 3D 几何主体投影 -->
+    <g transform="translate(225, 180)">
+      <!-- 外接圆/球轮廓 -->
+      <circle cx="0" cy="0" r="130" fill="#F0F4F6" fill-opacity="0.6" stroke="#D4D4D4" stroke-width="1.2"/>
+      <!-- 球体水平赤道大圆辅助线 -->
+      <ellipse cx="0" cy="0" rx="130" ry="35" fill="none" stroke="#D4D4D4" stroke-width="1" stroke-dasharray="3,3" />
+
+      <!-- 球心 O (四棱锥顶点) -->
+      <circle cx="0" cy="0" r="3" fill="#4A4A4A"/>
+      <text x="-15" y="-5" font-size="13" font-weight="bold">O</text>
+
+      <!-- 锥体底面所在的球小圆轮廓 (h = 0.577, 投影高度 = 130 * 0.577 = 75) -->
+      <!-- 半径 r = 130 * sqrt(1 - 0.577^2) = 130 * 0.816 = 106. ax=106, ay=28.6 -->
+      <ellipse cx="0" cy="75" rx="106" ry="28" fill="none" stroke="#B0C4DE" stroke-width="1" stroke-dasharray="4,3"/>
+
+      <!-- 锥体底面四边形 (最大体积状态时的正方形透视投影) -->
+      <!-- 顶点 V1(前), V2(右), V3(后), V4(左) -->
+      <!-- V1: (0, 75 + 28) = (0, 103) -->
+      <!-- V2: (106, 75) -->
+      <!-- V3: (0, 75 - 28) = (0, 47) -->
+      <!-- V4: (-106, 75) -->
+      <!-- 稍微偏转一个角度以显示立体感 -->
+      <!-- 旋转后的坐标计算如下 -->
+      <polygon points="90,85 -30,101 -90,65 30,49" fill="#D5E4E6" fill-opacity="0.7" stroke="#4A4A4A" stroke-width="1.2"/>
+
+      <!-- 后方不可见侧棱 (虚线) -->
+      <line x1="0" y1="0" x2="-90" y2="65" stroke="#99AAB5" stroke-width="1" stroke-dasharray="4,4"/>
+      <line x1="0" y1="0" x2="30" y2="49" stroke="#99AAB5" stroke-width="1" stroke-dasharray="4,4"/>
+
+      <!-- 前方可见侧棱 (实线) -->
+      <line x1="0" y1="0" x2="90" y2="85" stroke="#4A4A4A" stroke-width="1.2"/>
+      <line x1="0" y1="0" x2="-30" y2="101" stroke="#4A4A4A" stroke-width="1.2"/>
+
+      <!-- 高度 h (球心到截面圆心的连线) -->
+      <line x1="0" y1="0" x2="0" y2="75" stroke="#E5989B" stroke-width="2" stroke-dasharray="2,2"/>
+      <circle cx="0" cy="75" r="2.5" fill="#E5989B"/>
+      <text x="8" y="45" fill="#E5989B" font-weight="bold">h = 1/√3</text>
+      
+      <!-- 底面中心到顶点的外接圆半径 r -->
+      <line x1="0" y1="75" x2="90" y2="85" stroke="#99AAB5" stroke-width="1" stroke-dasharray="2,2"/>
+      <text x="45" y="88" fill="#666666" font-size="11">r</text>
+
+      <!-- 顶点标签 -->
+      <text x="100" y="95" font-size="11">A</text>
+      <text x="-40" y="115" font-size="11">B</text>
+      <text x="-105" y="65" font-size="11" fill="#888888">C</text>
+      <text x="35" y="45" font-size="11" fill="#888888">D</text>
+    </g>
+  </g>
+
+  <!-- 右侧上：函数曲线分析 -->
+  <g transform="translate(510, 100)">
+    <rect width="460" height="210" fill="none" stroke="#E5E5E5" stroke-width="1.2" rx="4"/>
+    <text x="15" y="25" font-size="12" fill="#888888" letter-spacing="0.5">体积随高度变化曲线: V(h) = 2/3 · h(1 - h²)</text>
+
+    <!-- 坐标轴 -->
+    <g transform="translate(50, 160)">
+      <!-- X轴 (h: 0 to 1 -> 0 to 350) -->
+      <line x1="0" y1="0" x2="360" y2="0" stroke="#4A4A4A" stroke-width="1.2"/>
+      <text x="370" y="5" font-size="11">h</text>
+      <text x="0" y="15" font-size="10" text-anchor="middle">0</text>
+      <text x="350" y="15" font-size="10" text-anchor="middle">1.0</text>
+
+      <!-- Y轴 (V: 0 to 0.3 -> 0 to -120) -->
+      <line x1="0" y1="0" x2="0" y2="-130" stroke="#4A4A4A" stroke-width="1.2"/>
+      <text x="-10" y="-135" font-size="11" text-anchor="middle">V</text>
+      <text x="-20" y="-102" font-size="10">0.25</text>
+
+      <!-- 体积变化曲线 -->
+      <!-- V(h) = (2/3)*h*(1-h^2) -->
+      <!-- x_pixel = h * 350 -->
+      <!-- y_pixel = - V(h) * 400 -->
+      <path d="M 0,0 
+               C 100,-60 170,-102 202,-102.6 
+               C 235,-102.6 300,-60 350,0" 
+            fill="none" stroke="#4A4A4A" stroke-width="1.8"/>
+
+      <!-- 最大值点标记 (h = 0.577 -> x = 202, V = 0.256 -> y = -102.6) -->
+      <line x1="202" y1="0" x2="202" y2="-102.6" stroke="#E5989B" stroke-width="1" stroke-dasharray="3,3"/>
+      <line x1="0" y1="-102.6" x2="202" y2="-102.6" stroke="#E5989B" stroke-width="1" stroke-dasharray="3,3"/>
+      <circle cx="202" cy="-102.6" r="4" fill="#E5989B"/>
+      
+      <!-- 极值数值标注 -->
+      <text x="210" y="-108" fill="#E5989B" font-weight="bold" font-size="12">Max V ≈ 0.256</text>
+      <text x="202" y="15" fill="#E5989B" font-size="11" text-anchor="middle" font-weight="bold">√3/3</text>
+    </g>
+  </g>
+
+  <!-- 右侧下：数学推导与参数 -->
+  <g transform="translate(510, 325)">
+    <rect width="460" height="135" fill="none" stroke="#E5E5E5" stroke-width="1.2" rx="4"/>
+    <text x="15" y="25" font-size="12" fill="#888888" letter-spacing="0.5">数学推导关系</text>
+    
+    <g transform="translate(20, 50)" font-size="13" fill="#4A4A4A">
+      <text x="0" y="10">1. 底面圆半径:  r = √(R² - h²) = √(1 - h²)</text>
+      <text x="0" y="32">2. 最大底面积 (正方形):  S = 2r² = 2(1 - h²)</text>
+      <text x="0" y="54">3. 四棱锥体积:  V = 1/3 · S · h = 2/3(h - h³)</text>
+      
+      <rect x="0" y="70" width="420" height="1" fill="#E5E5E5"/>
+      <text x="0" y="90" font-weight="bold" fill="#E5989B">求导得: V'(h) = 2/3(1 - 3h²) = 0  ⇒  h = √3/3</text>
+    </g>
+  </g>
+
+  <!-- 底部：控制面板 -->
+  <g transform="translate(30, 480)">
+    <rect width="940" height="90" fill="none" stroke="#4A4A4A" stroke-width="1.2" rx="4"/>
+    <text x="20" y="25" font-size="12" fill="#888888" letter-spacing="0.5">交互式调节</text>
+
+    <!-- 阻尼高度调节滑块 -->
+    <g transform="translate(20, 45)">
+      <text x="0" y="15" font-size="13">调节四棱锥高度 (h):</text>
+      <line x1="160" y1="10" x2="560" y2="10" stroke="#E5E5E5" stroke-width="3" stroke-linecap="round"/>
+      <line x1="160" y1="10" x2="391" y2="10" stroke="#E5989B" stroke-width="3" stroke-linecap="round"/>
+      <!-- 滑块触点定位在 h = 0.577 (映射为 160 + 0.577*400 = 391) -->
+      <circle cx="391" cy="10" r="6" fill="#E5989B" stroke="#ffffff" stroke-width="1.5" style="cursor: pointer;"/>
+      <text x="575" y="14" font-size="12" font-weight="bold">0.577 (√3/3)</text>
+    </g>
+
+    <!-- 快捷复位按钮 -->
+    <g transform="translate(720, 38)" style="cursor: pointer;">
+      <rect width="180" height="30" rx="3" fill="#E5989B" fill-opacity="0.15" stroke="#E5989B" stroke-width="1"/>
+      <text x="90" y="19" fill="#E5989B" font-weight="bold" text-anchor="middle">吸附到最大体积状态</text>
+    </g>
+  </g>
+</svg>

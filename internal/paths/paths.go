@@ -60,6 +60,15 @@ func WorkspaceStatePath() (string, error) {
 	return filepath.Join(dir, "workspace-state.json"), nil
 }
 
+func AppStatePath() (string, error) {
+	dir, err := ConfigDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(dir, "app-state.json"), nil
+}
+
 func UpdatesDir() (string, error) {
 	dir, err := ConfigDir()
 	if err != nil {

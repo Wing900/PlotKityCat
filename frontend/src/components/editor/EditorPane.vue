@@ -135,6 +135,11 @@ function handlePanelPointerDown(event: PointerEvent) {
     }"
     @pointerdown="handlePanelPointerDown"
   >
+    <div
+      class="onboarding-focus-region onboarding-focus-region-editor"
+      data-tour="editor-pane"
+      aria-hidden="true"
+    />
     <div v-if="isSearchOpen" ref="searchBar" class="editor-search-bar">
       <div class="editor-search-input-shell">
         <input

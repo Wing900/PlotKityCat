@@ -137,6 +137,7 @@ export function useScriptWorkspaceMachine(
     onError,
     repository,
     saveCurrentScript: scriptFileActions.saveCurrentScript,
+    workspaces,
     workspacePhase,
   });
 
@@ -155,6 +156,7 @@ export function useScriptWorkspaceMachine(
     deleteScript: scriptFileActions.deleteScript,
     deleteWorkspace: workspaceActions.deleteWorkspace,
     deletingScriptName: scriptFileActions.deletingScriptName,
+    enterOnboardingWorkspace: workspaceActions.enterOnboardingWorkspace,
     isCreateDialogOpen: scriptFileActions.isCreateDialogOpen,
     isCreatingScript,
     isDeletingScript,

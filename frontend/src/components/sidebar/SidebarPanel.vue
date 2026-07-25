@@ -40,7 +40,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <aside class="sidebar">
+  <aside class="sidebar" data-tour="sidebar-panel">
     <div class="brand">
       <div class="brand-mark">
         <img class="brand-mark-image" :src="brandLogoUrl" alt="PlotKityCat logo" />

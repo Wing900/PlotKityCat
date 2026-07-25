@@ -47,6 +47,12 @@ export function useWorkspaceScriptOps(deps: WorkspaceScriptOpsDeps) {
     await scriptWorkspace.deleteWorkspace(name);
   }
 
+  // 新手引导使用随应用发布的标准工作区；切换前先确保当前笔记落盘。
+  async function enterOnboardingWorkspace() {
+    await noteWorkspace.flushPendingSave(scriptWorkspace.currentFile.value);
+    return scriptWorkspace.enterOnboardingWorkspace();
+  }
+
   async function selectScript(name: string) {
     await scriptWorkspace.selectScript(name);
   }
@@ -59,6 +65,7 @@ export function useWorkspaceScriptOps(deps: WorkspaceScriptOpsDeps) {
     createWorkspace,
     renameWorkspace,
     deleteWorkspace,
+    enterOnboardingWorkspace,
     selectScript,
   };
 }
