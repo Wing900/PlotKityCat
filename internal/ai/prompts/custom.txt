@@ -8,262 +8,278 @@ analyze :
   - 固定问题：若自由度可降为0，则保证其坐标与方程唯一性
   - 欠定问题：若自由度不可降为0，即有动点或者动线，而问题和定理的核心需要研究此对象，则在后续代码中输出多种赋值可能作为并列子图
   - 欠定问题：若问题和定理的核心不在于此对象，忽略并赋值最美的可能
-output : 
+design : 
+  - style : 
+      - color: |
+        马卡龙莫兰迪色系（偏甜，不洗白）
+        本色系采用 HSL 色彩空间下的粉彩化生成模型。背景采用偏黄暖白色，明度 L > 0.96；文字采用中性深灰，明度 L ≈ 0.29。主色固定在若干柔和色相锚点 H ∈ {4°, 24°, 83°, 159°, 228°}，并约束为中高明度 L ≈ 0.72 ~ 0.84、中饱和度 S ≈ 0.45 ~ 0.70。
+        每个主色由公式 Color_i = (1 - α) × HSL(H_i, S, L) + α × BG 生成，即先在 HSL 空间得到基础色，再与暖白背景色进行线性混合。马卡龙偏甜：背景混合比例 α 取低（约 0.18 ~ 0.25），让主色更鲜更立体，不要洗白。辅助线采用低饱和灰蓝；强调色保持同色相或邻近色相，但进一步降低 α，使其在统一风格中具备更高识别度。
+      - beauty : 塔夫特 半透明投影 默认无任何文字 默认SimHei与cm字体 不喜欢解释 喜欢以图形代替语言 虚线透骨0.8 实线落锚2 圆点驻形6
+      - marker : 对于图形与点的标注，默认只有基本的点$A$$B$$C$$D$，或需要标记的边长r,h，其它使用颜色和透明度渐变等来代替标注
+  - subplots : |
+      视情况而用——用了哪种子图才套对应行，没用就不套：
+      3d : 正交投影 无透视畸变 经典立体几何考卷视角 set_axis_off 暖白底 莫兰迪面 半透明 aux 虚线边
+      2d-curve : 隐 top/right spine，aux 左下 spine，淡 tick，细线条，无非必要刻度/网格/边框，适用打印
+      2d-shape : equal aspect 真实比例，无刻度，aux 框
+  - experiment : 
+      - method : |
+        通用可视化实验设计七步：
+        第一步 学习目标写成“关系”：围绕一个可发现、可验证的关系组织，不围绕“画一个 X”“展示动画”。
+        第二步 变量 / 不变量 / 观测量三分：可操作变量=用户能改什么；不变量=操作中保持稳定的结构；观测量=随操作变化的结果。
+        第三步 每子图回答一个独立问题：不要因为有空间就加子图，缺乏独立任务的子图会变成视觉噪声。
+        第四步 延迟展示结论：初始隐藏公式、最优点、标准答案、拟合曲线、证明；揭示按钮切换认知阶段，不是视觉开关。
+        第五步 让历史状态留下来：轨迹、残影、实验点、快照、表格、前后对照、最好记录、误差变化——把时间上的变化转化为同屏比较。
+        第六步 反馈指方向，同时留思考空间：初始只显示当前长度与最好记录，不直接告诉用户该怎么动；揭示后再给理论最小值、地形、最优点、差距。反馈随阶段逐步增强。
+        第七步 从现象进入解释与证明：挑战→操作→测量→记录→比较→猜想→揭示→证明→迁移，构成完整闭环。
+      - layout : 选择：单图/多子图(伪动态)/Animation 3D与2D混合 使用bbox_inches='tight' fig.subplots_adjust ax.text2D(...) transparent=True
+      - interaction : 动点-虚线/启用交互，增加复选框与拖动条
+rules : 
   - control : 任何图形，不能以直觉写代码，必须要按照analysis的代数结果来确定！
   - designcard : 如果笔记上下文中出现"设计说明"块，说明用户有一份设计卡片，必须严格遵循其中的设计 plan 来写代码，而忽略题目。卡片里描述的每一个功能、每一个图形、每一个交互控件都要在代码中实现，不得以难度大、冗余、省事为由跳过或替换。如果某项确实无法实现，必须在代码注释中明确标注未实现的原因，不得静默省略。多张设计卡片应分别保留各自的多子图结构，不得擅自合并
-      - color: |
-        马卡龙莫兰迪浅色系
-        本色系采用 HSL 色彩空间下的粉彩化生成模型。背景采用偏黄暖白色，明度 L > 0.96；文字采用中性深灰，明度 L ≈ 0.29。主色固定在若干柔和色相锚点 H ∈ {4°, 24°, 83°, 159°, 228°}，并约束为高明度 L ≈ 0.80 ~ 0.90、低到中饱和度 S ≈ 0.35 ~ 0.60。
-        每个主色由公式 Color_i = (1 - α) × HSL(H_i, S, L) + α × BG 生成，即先在 HSL 空间得到基础色，再与暖白背景色进行线性混合，以获得统一的马卡龙粉彩效果。辅助线采用低饱和灰蓝；强调色保持同色相或邻近色相，但降低背景混合比例 α，使其在统一风格中具备更高识别度。
-      - beauty : 塔夫特 半透明投影 默认无任何文字 默认SimHei与cm字体 不喜欢解释 喜欢以图形代替语言 虚线透骨0.8 实线落锚2 圆点驻形6
-      - logic : 正交投影 无透视畸变 经典的立体几何考卷视角
-      - shape : 真实比例 适用打印 细线条 无非必要刻度 网格 边框 动点-虚线/启用交互，增加复选框与拖动条
-      - layout : 选择：单图/多子图(伪动态)/Animation 3D与2D混合 使用bbox_inches='tight' fig.subplots_adjust ax.text2D(...) transparent=True
-  - marker : 对于图形与点的标注，默认只有基本的点$A$$B$$C$$D$，或需要标记的边长r,h，其它使用颜色和透明度渐变等来代替标注
-  - example : |
+  - structure : |
+    封装六律，与 control 同级，不让步：
+    同一形状出现 3 次以上，抽函数；复制粘贴会养出维护债。
+    下划线开头即私有 API（_offsets3d 之流），换公开接口（set_data_3d），踩私会随 matplotlib 升级而断。
+    artist 预创建一次，原地 set_position_3d / set_text 改；每帧 remove + 重建会抖、会卡。
+    闭包改值用列表 [x] 或字典 {'k':v} 装，global 污染模块会乱。
+    slider / button / checkbutton 仪式重复，抽 make_slider / make_button；每图重写会臃肿。
+    能原地改不删建，能抽函数不复制，能装容器不 global。
+example : |
      这是学习的，不是复刻的例子。
      '''
+        import itertools
         import matplotlib as mpl
         import matplotlib.pyplot as plt
         import numpy as np
         from mpl_toolkits.mplot3d.art3d import Poly3DCollection
         from matplotlib.widgets import Slider, Button, CheckButtons
-
-        mpl.rcParams['lines.antialiased'] = True
-        mpl.rcParams['patch.antialiased'] = True
-
-        # 默认参数需要遵守--------------
+        
+        mpl.rcParams['lines.antialiased'] = mpl.rcParams['patch.antialiased'] = True
         mpl.rcParams["axes3d.mouserotationstyle"] = "azel"
-        plt.rcParams.update({
-            "font.family": "SimHei",
-            "mathtext.fontset": "cm",
-            "axes.unicode_minus": False,
-            "font.size": 11
-        })
-        # ------------------------------------
-
+        plt.rcParams.update({"font.family": "SimHei", "mathtext.fontset": "cm",
+                             "axes.unicode_minus": False, "font.size": 11})
+        
         MORANDI = {
-            'plane_alpha': '#BFD4E6',
-            'plane_beta':  '#B8DCCF',
-            'plane_gamma': '#AFC4E8',
-            'line_main':   '#2F3A40',
-            'line_aux':    '#AEB9BF',
-            'bg':          '#F7FAFA',
-            'track':       '#E8EEEE',
+            'plane_alpha': '#BFD4E6', 'plane_beta': '#B8DCCF', 'plane_gamma': '#AFC4E8',
+            'line_main': '#2F3A40', 'line_aux': '#AEB9BF', 'bg': '#F7FAFA', 'track': '#E8EEEE',
+            'section': '#E6A66F', 'section_edge': '#9C5F2D', 'cut': '#BFD4E6',
         }
-        # 色系计算
-
-        def calc_intersection(theta_deg):
-            """计算动平面绕横轴旋转切割单位正方体截面。"""
-            theta = np.radians(theta_deg)
-            t = np.tan(theta)
-
-            if t <= 1:
-                verts = [(0, 0, 0), (1, 0, 0), (1, 1, t), (0, 1, t)]
-                area = np.sqrt(1 + t ** 2)
-            else:
-                verts = [(0, 0, 0), (1, 0, 0), (1, 1 / t, 1), (0, 1 / t, 1)]
-                area = np.sqrt((1 / t) ** 2 + 1)
-
-            return verts, area
-
-
-        fig = plt.figure(figsize=(10, 5), facecolor=MORANDI['bg'])
-
-        # [左图]: 3D 空间
-        ax1 = fig.add_axes([0.02, 0.22, 0.45, 0.70], projection='3d', proj_type='ortho')
-        ax1.set_axis_off()
-        ax1.set_facecolor(MORANDI['bg'])
-        ax1.view_init(elev=20, azim=-45)
-
-        ax1.set_xlim(0, 1)
-        ax1.set_ylim(0, 1)
-        ax1.set_zlim(0, 1)
-
-        ax1.text2D(
-            0.5, 0.95,
-            "空间几何: 动平面截面演化",
-            transform=ax1.transAxes,
-            ha='center',
-            fontsize=13,
-            color=MORANDI['line_main']
-        )
-
-        # [右图]: 2D 曲线
-        ax2 = fig.add_axes([0.55, 0.25, 0.38, 0.60])
+        SNAP_COLORS = ['#5B8E7D', '#B56B45', '#7C6DAF', '#3C7A9E', '#A0754E']  # 记录快照循环色
+        
+        
+        def cube_section(n):
+            """平面 n·p=0 切立方体 [-0.5,0.5]³ 的截面多边形。
+            返回 (有序 3D 顶点, 平面内 2D 顶点, 面积, 平面正交基 u/v)。"""
+            n = np.asarray(n, float)
+            if np.linalg.norm(n) < 1e-6:
+                n = np.array([0.0, 0.0, 1.0])
+            c = 0.5
+            pts = []
+            for i in range(3):                                  # 沿 i 轴变化的棱
+                for fixed in itertools.product([-c, c], repeat=2):
+                    v1 = np.zeros(3); v2 = np.zeros(3)
+                    others = [a for a in range(3) if a != i]
+                    v1[others[0]], v1[others[1]] = fixed
+                    v2[others[0]], v2[others[1]] = fixed
+                    v1[i] = -c; v2[i] = c
+                    d = n @ (v2 - v1)
+                    if abs(d) < 1e-12:
+                        continue
+                    t = -n @ v1 / d
+                    if 0.0 <= t <= 1.0:
+                        pts.append(v1 + t * (v2 - v1))
+            if len(pts) < 3:
+                return np.zeros((0, 3)), np.zeros((0, 2)), 0.0, np.eye(3)[:2]
+            pts = np.array(pts)
+            n_hat = n / np.linalg.norm(n)
+            ref = np.array([1.0, 0.0, 0.0]) if abs(n_hat[0]) < 0.9 else np.array([0.0, 1.0, 0.0])
+            u = np.cross(n_hat, ref); u /= np.linalg.norm(u)
+            v = np.cross(n_hat, u)
+            pts2d = pts @ np.array([u, v]).T
+            cen = pts2d.mean(axis=0)
+            order = np.argsort(np.arctan2(pts2d[:, 1] - cen[1], pts2d[:, 0] - cen[0]))
+            pts3d, pts2d = pts[order], pts2d[order]
+            x, y = pts2d[:, 0], pts2d[:, 1]
+            area = 0.5 * abs(np.dot(x, np.roll(y, -1)) - np.dot(y, np.roll(x, -1)))
+            return pts3d, pts2d, area, np.array([u, v])
+        
+        
+        # ============ 六律：控件仪式抽函数 ============
+        def style_control_axes(ax):
+            ax.set_facecolor(MORANDI['bg'])
+            for sp in ax.spines.values():
+                sp.set_visible(False)
+            ax.set_xticks([]); ax.set_yticks([])
+        
+        
+        def make_slider(rect, label, lo, hi, init):
+            ax = fig.add_axes(rect); style_control_axes(ax)
+            s = Slider(ax, label, lo, hi, valinit=init, valfmt='%.2f',
+                       color=MORANDI['plane_beta'], track_color=MORANDI['track'], initcolor='none',
+                       handle_style={'facecolor': MORANDI['line_main'], 'edgecolor': 'white', 'size': 8})
+            s.label.set_color(MORANDI['line_main']); s.valtext.set_color(MORANDI['line_main'])
+            return s
+        
+        
+        def make_button(rect, label):
+            ax = fig.add_axes(rect); style_control_axes(ax)
+            for sp in ax.spines.values():
+                sp.set_color(MORANDI['line_aux']); sp.set_linewidth(0.8)
+            btn = Button(ax, label, color='white', hovercolor='#F1F6F6')
+            btn.label.set_color(MORANDI['line_main'])
+            return btn
+        
+        
+        def make_checkbutton(rect, labels, actives):
+            ax = fig.add_axes(rect); style_control_axes(ax)
+            return CheckButtons(ax, labels, actives=actives,
+                label_props={'color': [MORANDI['line_main']]},
+                frame_props={'edgecolor': [MORANDI['line_aux']], 'facecolor': ['white'],
+                             'linewidth': [0.8], 's': [36]},
+                check_props={'facecolor': [MORANDI['line_main']], 'linewidth': [1.2], 's': [36]})
+        
+        
+        # ============ 画布 ============
+        fig = plt.figure(figsize=(11, 5.5), facecolor=MORANDI['bg'])
+        
+        # 第三步：左图答"自由平面在空间中怎样切"，右图答"截面真形长什么样"
+        ax1 = fig.add_axes([0.02, 0.20, 0.48, 0.72], projection='3d', proj_type='ortho')
+        ax1.set_axis_off(); ax1.set_facecolor(MORANDI['bg']); ax1.view_init(elev=20, azim=-45)
+        ax1.set_xlim(-0.65, 0.65); ax1.set_ylim(-0.65, 0.65); ax1.set_zlim(-0.65, 0.65)
+        ax1.text2D(0.5, 0.95, "自由平面切割立方体", transform=ax1.transAxes,
+                   ha='center', fontsize=13, color=MORANDI['line_main'])
+        
+        ax2 = fig.add_axes([0.56, 0.22, 0.40, 0.66])
         ax2.set_facecolor(MORANDI['bg'])
-        ax2.spines['top'].set_visible(False)
-        ax2.spines['right'].set_visible(False)
-        ax2.spines['left'].set_color(MORANDI['line_aux'])
-        ax2.spines['bottom'].set_color(MORANDI['line_aux'])
-        ax2.tick_params(colors=MORANDI['line_main'])
-
-        ax2.set_title("截面积曲线 $S(\\theta)$", pad=15, fontsize=13, color=MORANDI['line_main'])
-        ax2.set_xlabel(r"$\theta\ (^{\circ})$", color=MORANDI['line_main'])
-
-        # 单位正方体边线
-        cube_lines = []
-        for p in (0, 1):
-            cube_lines.append(ax1.plot([0, 1], [p, p], [0, 0], color=MORANDI['line_aux'], lw=0.8, ls='--')[0])
-            cube_lines.append(ax1.plot([0, 1], [p, p], [1, 1], color=MORANDI['line_aux'], lw=0.8, ls='--')[0])
-            cube_lines.append(ax1.plot([p, p], [0, 1], [0, 0], color=MORANDI['line_aux'], lw=0.8, ls='--')[0])
-            cube_lines.append(ax1.plot([p, p], [0, 1], [1, 1], color=MORANDI['line_aux'], lw=0.8, ls='--')[0])
-            cube_lines.append(ax1.plot([p, p], [0, 0], [0, 1], color=MORANDI['line_aux'], lw=0.8, ls='--')[0])
-            cube_lines.append(ax1.plot([p, p], [1, 1], [0, 1], color=MORANDI['line_aux'], lw=0.8, ls='--')[0])
-
-        init_verts, init_area = calc_intersection(30)
-
-        poly3d = Poly3DCollection(
-            [init_verts],
-            facecolors=MORANDI['plane_alpha'],
-            edgecolors=MORANDI['line_main'],
-            linewidths=1.2,
-            alpha=0.4
-        )
-        ax1.add_collection3d(poly3d)
-
-        vertex_label_artists = []
-
-
-        def draw_vertex_labels(verts):
-            """刷新截面顶点标签，避免使用 global 污染模块变量。"""
-            for artist in vertex_label_artists:
-                artist.remove()
-            vertex_label_artists.clear()
-
-            labels = [r"$A$", r"$B$", r"$C$", r"$D$"]
-            for label, (x, y, z) in zip(labels, verts):
-                dx = -0.04 if x == 0 else 0.04
-                dy = -0.04 if y == 0 else 0.04
-                dz = -0.04 if z == 0 else 0.04
-
-                artist = ax1.text(
-                    x + dx, y + dy, z + dz,
-                    label,
-                    fontsize=13,
-                    color=MORANDI['line_main'],
-                    ha='center',
-                    va='center'
-                )
-                vertex_label_artists.append(artist)
-
-
-        draw_vertex_labels(init_verts)
-
-        thetas = np.linspace(0, 89.9, 200)
-        areas = np.array([calc_intersection(th)[1] for th in thetas])
-
-        ax2.plot(thetas, areas, color=MORANDI['plane_gamma'], lw=1.2)
-        dot2d, = ax2.plot([30], [init_area], 'o', color=MORANDI['line_main'], ms=5)
-
-        fill_state = {
-            'artist': ax2.fill_between(
-                thetas, areas,
-                where=(thetas <= 30),
-                color=MORANDI['plane_gamma'],
-                alpha=0.15
-            )
-        }
-
-        # 布局交互 UI 组件
-        ax_slider = fig.add_axes([0.15, 0.08, 0.40, 0.02])
-        ax_chk = fig.add_axes([0.62, 0.05, 0.15, 0.08])
-        ax_btn = fig.add_axes([0.82, 0.06, 0.08, 0.05])
-
-        ax_slider.set_facecolor(MORANDI['bg'])
-        ax_chk.set_facecolor(MORANDI['bg'])
-        ax_btn.set_facecolor(MORANDI['bg'])
-
-        # 滑块配置：不要 ax_slider.set_axis_off()，否则容易影响 Slider 自己的文本/handle
-        slider = Slider(
-            ax=ax_slider,
-            label='旋转角 $\\theta$',
-            valmin=0,
-            valmax=89.9,
-            valinit=30,
-            valfmt='%1.1f°',
-            color=MORANDI['plane_beta'],
-            track_color=MORANDI['track'],
-            initcolor='none',
-            handle_style={
-                'facecolor': MORANDI['line_main'],
-                'edgecolor': 'white',
-                'size': 8,
-            }
-        )
-
-        for spine in ax_slider.spines.values():
-            spine.set_visible(False)
-        ax_slider.set_xticks([])
-        ax_slider.set_yticks([])
-
-        slider.label.set_color(MORANDI['line_main'])
-        slider.valtext.set_color(MORANDI['line_main'])
-
-
-        chk = CheckButtons(
-            ax=ax_chk,
-            labels=['辅助框线'],
-            actives=[True],
-            label_props={
-                'color': [MORANDI['line_main']],
-            },
-            frame_props={
-                'edgecolor': [MORANDI['line_aux']],
-                'facecolor': ['white'],
-                'linewidth': [0.8],
-                's': [36],
-            },
-            check_props={
-                'facecolor': [MORANDI['line_main']],
-                'linewidth': [1.2],
-                's': [36],
-            }
-        )
-
-        for spine in ax_chk.spines.values():
-            spine.set_visible(False)
-        ax_chk.set_xticks([])
-        ax_chk.set_yticks([])
-
-        # 重置按钮配置
-        btn = Button(ax_btn, '重置', color='white', hovercolor='#F1F6F6')
-        for spine in ax_btn.spines.values():
-            spine.set_color(MORANDI['line_aux'])
-            spine.set_linewidth(0.8)
-        btn.label.set_color(MORANDI['line_main'])
-
-
-        def update(val):
-            theta = slider.val
-            verts, area = calc_intersection(theta)
-
-            poly3d.set_verts([verts])
-            draw_vertex_labels(verts)
-            dot2d.set_data([theta], [area])
-
-            fill_state['artist'].remove()
-            fill_state['artist'] = ax2.fill_between(
-                thetas, areas,
-                where=(thetas <= theta),
-                color=MORANDI['plane_gamma'],
-                alpha=0.15
-            )
-
+        ax2.spines['top'].set_visible(False); ax2.spines['right'].set_visible(False)
+        ax2.spines['left'].set_color(MORANDI['line_aux']); ax2.spines['bottom'].set_color(MORANDI['line_aux'])
+        ax2.set_title("截面真形", pad=12, fontsize=13, color=MORANDI['line_main'])
+        ax2.set_xlim(-0.9, 0.9); ax2.set_ylim(-0.9, 0.9); ax2.set_aspect('equal')
+        ax2.set_xticks([]); ax2.set_yticks([])
+        
+        # 立方体线框
+        cube_edges = []
+        c = 0.5
+        for i in range(3):
+            for fixed in itertools.product([-c, c], repeat=2):
+                p1 = np.zeros(3); p2 = np.zeros(3)
+                others = [a for a in range(3) if a != i]
+                p1[others[0]], p1[others[1]] = fixed
+                p2[others[0]], p2[others[1]] = fixed
+                p1[i] = -c; p2[i] = c
+                cube_edges.append(ax1.plot([p1[0], p2[0]], [p1[1], p2[1]], [p1[2], p2[2]],
+                             color=MORANDI['line_aux'], lw=0.8, ls='--')[0])
+        
+        # 初始截面 + 切割平面
+        init_n = (0.3, 0.4, 1.0)
+        pts3d0, pts2d0, area0, uv0 = cube_section(init_n)
+        cut_plane = Poly3DCollection([[0.8*uv0[0]+0.8*uv0[1], -0.8*uv0[0]+0.8*uv0[1],
+                                       -0.8*uv0[0]-0.8*uv0[1], 0.8*uv0[0]-0.8*uv0[1]]],
+            facecolors=MORANDI['cut'], edgecolors=MORANDI['line_aux'], linewidths=0.6,
+            linestyles=':', alpha=0.18)
+        ax1.add_collection3d(cut_plane)
+        section3d = Poly3DCollection([pts3d0], facecolors=MORANDI['section'],
+            edgecolors=MORANDI['section_edge'], linewidths=1.6, alpha=0.7)
+        ax1.add_collection3d(section3d)
+        section2d, = ax2.fill(pts2d0[:, 0], pts2d0[:, 1], facecolor=MORANDI['section'],
+                              edgecolor=MORANDI['section_edge'], lw=1.6, alpha=0.7)
+        
+        # 六步：只显示当前面积，不预告最优点
+        area_text = ax1.text2D(0.03, 0.96, "", transform=ax1.transAxes, va='top',
+                              fontsize=11, color=MORANDI['line_main'],
+                              bbox={'boxstyle': 'round,pad=0.4', 'facecolor': 'white',
+                                    'edgecolor': MORANDI['line_aux'], 'alpha': 0.9})
+        # 第四步：揭示默认隐藏结论
+        formula_text = ax1.text2D(0.5, 0.04, "", transform=ax1.transAxes, ha='center',
+                                  fontsize=11, color=MORANDI['line_main'])
+        # 第五步：记录快照（循环色）
+        snapshots = []
+        snapshot_idx = [0]
+        
+        # ============ 控件：xyz 三个法向量分量 ============
+        s_nx = make_slider([0.10, 0.10, 0.28, 0.025], r'法向 $n_x$', -1.0, 1.0, init_n[0])
+        s_ny = make_slider([0.10, 0.06, 0.28, 0.025], r'法向 $n_y$', -1.0, 1.0, init_n[1])
+        s_nz = make_slider([0.10, 0.02, 0.28, 0.025], r'法向 $n_z$', -1.0, 1.0, init_n[2])
+        chk = make_checkbutton([0.42, 0.04, 0.12, 0.07], ['辅助框线'], [True])
+        btn_reset  = make_button([0.55, 0.045, 0.06, 0.045], '重置')
+        btn_reveal = make_button([0.62, 0.045, 0.06, 0.045], '揭示')
+        btn_record = make_button([0.69, 0.045, 0.06, 0.045], '记录')
+        btn_clear  = make_button([0.76, 0.045, 0.06, 0.045], '清除')
+        
+        
+        def update(_val=None):
+            n = (s_nx.val, s_ny.val, s_nz.val)
+            pts3d, pts2d, area, uv = cube_section(n)
+            if len(pts3d) >= 3:
+                section3d.set_verts([pts3d])
+                section2d.set_xy(pts2d)
+                # 切割平面随法向旋转
+                cut_plane.set_verts([[0.8*uv[0]+0.8*uv[1], -0.8*uv[0]+0.8*uv[1],
+                                      -0.8*uv[0]-0.8*uv[1], 0.8*uv[0]-0.8*uv[1]]])
+            area_text.set_text(f"面积 S = {area:.4f}")
             fig.canvas.draw_idle()
-
-
-        def toggle_visibility(label):
+        
+        
+        def toggle_visibility(_label):
             visible = chk.get_status()[0]
-            for line in cube_lines:
-                line.set_visible(visible)
+            for edge in cube_edges:
+                edge.set_visible(visible)
             fig.canvas.draw_idle()
-
-
-        slider.on_changed(update)
+        
+        
+        def reveal(_e):
+            if formula_text.get_text() == "":
+                formula_text.set_text(r"$A_{max}=\sqrt{2}\approx1.414$ 当 $n\parallel(1,1,0)$；$A_{min}=1$ 当 $n\parallel(1,0,0)$")
+                btn_reveal.label.set_text('隐藏')
+            else:
+                formula_text.set_text("")
+                btn_reveal.label.set_text('揭示')
+            fig.canvas.draw_idle()
+        
+        
+        def record(_e):
+            n = (s_nx.val, s_ny.val, s_nz.val)
+            pts3d, pts2d, area, _ = cube_section(n)
+            if len(pts3d) < 3:
+                return
+            color = SNAP_COLORS[snapshot_idx[0] % len(SNAP_COLORS)]   # 循环色
+            snapshot_idx[0] += 1
+            ghost3d = Poly3DCollection([pts3d], facecolors=color, edgecolors=color,
+                linewidths=0.8, alpha=0.22)
+            ax1.add_collection3d(ghost3d)
+            ghost2d, = ax2.fill(pts2d[:, 0], pts2d[:, 1], facecolor='none', edgecolor=color,
+                                lw=1.2, ls='--', alpha=0.85)
+            snapshots.append((ghost3d, ghost2d))
+            if len(snapshots) > 5:                                    # 最多留 5 组
+                g3, g2 = snapshots.pop(0)
+                g3.remove(); g2.remove()
+            fig.canvas.draw_idle()
+        
+        
+        def clear_snapshots(_e=None):
+            for g3, g2 in snapshots:
+                g3.remove(); g2.remove()
+            snapshots.clear()
+            snapshot_idx[0] = 0
+            fig.canvas.draw_idle()
+        
+        
+        def reset(_e):
+            clear_snapshots()
+            formula_text.set_text("")
+            btn_reveal.label.set_text('揭示')
+            s_nx.reset(); s_ny.reset(); s_nz.reset()   # 触发 update
+        
+        
+        for s in (s_nx, s_ny, s_nz):
+            s.on_changed(update)
         chk.on_clicked(toggle_visibility)
-        btn.on_clicked(lambda event: slider.reset())
-
+        btn_reset.on_clicked(reset)
+        btn_reveal.on_clicked(reveal)
+        btn_record.on_clicked(record)
+        btn_clear.on_clicked(clear_snapshots)
+        
+        update()
         plt.show()
     '''
 notice : 
