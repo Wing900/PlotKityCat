@@ -30,8 +30,10 @@ wails dev
 ## 本地状态
 
 - `config/app-state.json` 保存版本化的应用状态，新手引导使用 `onboarding` 字段。
-- 新发布包不携带 `config/`；首次启动缺少该文件时，引导状态为 `unseen`。
-- 同一引导版本依次记录 `started`、`dismissed`、`completed`，`completed` 为终态。
+- 新发布包不携带 `config/`；应用创建 Store 时先检查既有 `config/`，早于本次启动写入状态。
+- 历史用户写入 `suppressed / existing-user`，不自动显示教程。
+- 教程模板缺失时写入 `suppressed / template-missing`，后续启动不再重复尝试。
+- 新用户依次记录 `unseen`、`started`、`dismissed`、`completed`；后三者均停止自动启动。
 - `Scripts/新手引导/` 保存教程内容，状态与内容采用独立生命周期。
 
 ## Runtime
@@ -71,6 +73,8 @@ wails dev
 ```powershell
 .\tools\build-versioned-app.ps1
 ```
+
+构建成功会同时生成 `build/bin/build-metadata.json`。打包与在线更新产物脚本会强制核对其中的版本，禁止复用旧 EXE。
 
 生成完整发布包：
 

@@ -216,7 +216,6 @@
   display: grid;
   place-items: center;
   background: color-mix(in srgb, var(--surface), transparent 22%);
-  backdrop-filter: blur(28px);
 }
 
 .design-card-optimize-backdrop {
@@ -258,7 +257,6 @@
   min-width: 0;
   height: 100%;
   background: color-mix(in srgb, var(--surface), transparent 82%);
-  backdrop-filter: blur(32px);
   overflow: hidden;
 }
 
@@ -292,14 +290,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  max-height: 100%;
+  flex: 0 1 auto;
+  overflow: hidden;
   transition: transform 0.1s ease-out;
   will-change: transform;
 }
 
 .design-card-svg-view-canvas svg {
   display: block;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
   filter: none;
 }
 

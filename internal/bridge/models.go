@@ -81,10 +81,11 @@ type InitSnapshot struct {
 }
 
 type OnboardingState struct {
-	Version   string `json:"version"`
-	Status    string `json:"status"`
-	LastStep  int    `json:"lastStep"`
-	UpdatedAt string `json:"updatedAt"`
+	Version           string `json:"version"`
+	Status            string `json:"status"`
+	LastStep          int    `json:"lastStep"`
+	SuppressionReason string `json:"suppressionReason"`
+	UpdatedAt         string `json:"updatedAt"`
 }
 
 type ImportSceneResult struct {

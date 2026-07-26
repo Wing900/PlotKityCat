@@ -707,17 +707,19 @@ export namespace bridge {
 	    version: string;
 	    status: string;
 	    lastStep: number;
+	    suppressionReason: string;
 	    updatedAt: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new OnboardingState(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.version = source["version"];
 	        this.status = source["status"];
 	        this.lastStep = source["lastStep"];
+	        this.suppressionReason = source["suppressionReason"];
 	        this.updatedAt = source["updatedAt"];
 	    }
 	}
@@ -893,3 +895,4 @@ export namespace bridge {
 	}
 
 }
+

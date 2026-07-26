@@ -1,14 +1,27 @@
 <script setup lang="ts">
-import { ref, reactive } from "vue";
+import { computed, reactive, ref, watch } from "vue";
+import { getDesignCardSvgAspectRatio } from "../services/designCardSvgGeometry";
 
-defineProps<{
+const props = defineProps<{
   svg: string;
 }>();
 
-const scale = ref(2);
+// SVG 经由 AI 生成时常使用 width="100%" / height="100%"。
+// 详情页先用 viewBox 建立确定尺寸，避免百分比尺寸在 Flex 布局中循环解析。
+const aspectRatio = computed(() => getDesignCardSvgAspectRatio(props.svg) ?? "5 / 3");
+const scale = ref(1);
 const position = reactive({ x: 0, y: 0 });
 const isDragging = ref(false);
 const startPos = reactive({ x: 0, y: 0 });
+
+watch(
+  () => props.svg,
+  () => {
+    scale.value = 1;
+    position.x = 0;
+    position.y = 0;
+  },
+);
 
 function handleWheel(event: WheelEvent) {
   event.preventDefault();
@@ -53,6 +66,7 @@ function stopDrag() {
       class="design-card-svg-view-canvas"
       :class="{ dragging: isDragging }"
       :style="{
+        aspectRatio,
         transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
         cursor: isDragging ? 'grabbing' : 'grab'
       }"

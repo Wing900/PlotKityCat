@@ -33,26 +33,6 @@
   pointer-events: none;
 }
 
-.workspace-divider-hotzone {
-  grid-column: 2;
-  position: relative;
-  z-index: 3;
-  width: 0;
-  min-width: 0;
-  min-height: 0;
-  overflow: visible;
-}
-
-.workspace-divider-hotzone::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -26px;
-  width: 44px;
-  height: 100%;
-  background: transparent;
-}
-
 .notebook-pane {
   grid-column: 3;
   position: relative;
@@ -157,12 +137,12 @@
 }
 
 .notebook-spine:hover,
-.workspace-divider-hotzone:hover + .notebook-pane .notebook-spine {
+.notebook-pane:hover .notebook-spine {
   background: color-mix(in srgb, var(--surface-soft), transparent 82%);
 }
 
 .notebook-spine:hover .notebook-divider-handle,
-.workspace-divider-hotzone:hover + .notebook-pane .notebook-divider-handle,
+.notebook-pane:hover .notebook-divider-handle,
 .notebook-divider-handle:focus-within {
   color: var(--muted);
   opacity: 1;

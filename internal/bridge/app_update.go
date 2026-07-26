@@ -4,6 +4,8 @@ import (
 	"errors"
 
 	"plotkitycat/internal/updater"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 func (a *App) GetUpdateStatus() (UpdateStatus, error) {
@@ -56,7 +58,13 @@ func (a *App) InstallUpdateAndRestart() error {
 		return errors.New("更新服务未初始化")
 	}
 
-	return a.updateService.InstallAndRestart()
+	if err := a.updateService.InstallAndRestart(); err != nil {
+		return err
+	}
+
+	// Installer 已完成 Ready Handshake；通过 Wails 生命周期退出，确保 Shutdown 全部执行。
+	runtime.Quit(a.ctx)
+	return nil
 }
 
 func mapUpdateStatus(status updater.Status) UpdateStatus {

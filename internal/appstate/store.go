@@ -4,32 +4,39 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
+	"plotkitycat/internal/atomicfile"
 	"plotkitycat/internal/paths"
 )
 
 const (
-	SchemaVersion         = 1
+	SchemaVersion         = 2
 	maxOnboardingVersion  = 64
 	maxOnboardingLastStep = 10_000
 )
 
 const (
-	OnboardingUnseen    = "unseen"
-	OnboardingStarted   = "started"
-	OnboardingDismissed = "dismissed"
-	OnboardingCompleted = "completed"
+	OnboardingUnseen     = "unseen"
+	OnboardingStarted    = "started"
+	OnboardingDismissed  = "dismissed"
+	OnboardingCompleted  = "completed"
+	OnboardingSuppressed = "suppressed"
+)
+
+const (
+	SuppressedExistingUser    = "existing-user"
+	SuppressedTemplateMissing = "template-missing"
 )
 
 type OnboardingState struct {
-	Version   string `json:"version"`
-	Status    string `json:"status"`
-	LastStep  int    `json:"lastStep"`
-	UpdatedAt string `json:"updatedAt,omitempty"`
+	Version           string `json:"version"`
+	Status            string `json:"status"`
+	LastStep          int    `json:"lastStep"`
+	SuppressionReason string `json:"suppressionReason,omitempty"`
+	UpdatedAt         string `json:"updatedAt,omitempty"`
 }
 
 type State struct {
@@ -38,11 +45,14 @@ type State struct {
 }
 
 type Store struct {
-	mu sync.Mutex
+	mu                    sync.Mutex
+	hadHistoricalUserData bool
 }
 
 func NewStore() *Store {
-	return &Store{}
+	return &Store{
+		hadHistoricalUserData: detectHistoricalUserData(),
+	}
 }
 
 func (s *Store) LoadOnboarding() (OnboardingState, error) {
@@ -76,6 +86,9 @@ func (s *Store) SaveOnboarding(version string, status string, lastStep int) (Onb
 		return defaultOnboardingState(), err
 	}
 	current := normalizeOnboardingState(state.Onboarding)
+	if current.Status == OnboardingSuppressed {
+		return current, nil
+	}
 	if current.Version == normalized.Version {
 		if current.Status == OnboardingCompleted &&
 			normalized.Status != OnboardingCompleted {
@@ -94,6 +107,46 @@ func (s *Store) SaveOnboarding(version string, status string, lastStep int) (Onb
 	}
 
 	return normalized, nil
+}
+
+func (s *Store) ResolveOnboarding(version string, templateAvailable bool) (OnboardingState, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	state, err := load()
+	if err != nil {
+		return defaultOnboardingState(), err
+	}
+	current := normalizeOnboardingState(state.Onboarding)
+	if current.Status != OnboardingUnseen {
+		return current, nil
+	}
+
+	reason := ""
+	switch {
+	case s.hadHistoricalUserData:
+		reason = SuppressedExistingUser
+	case !templateAvailable:
+		reason = SuppressedTemplateMissing
+	default:
+		return current, nil
+	}
+
+	current, err = validateOnboardingState(OnboardingState{
+		Version:           version,
+		Status:            OnboardingSuppressed,
+		SuppressionReason: reason,
+	})
+	if err != nil {
+		return defaultOnboardingState(), err
+	}
+	current.UpdatedAt = time.Now().UTC().Format(time.RFC3339)
+	state.SchemaVersion = SchemaVersion
+	state.Onboarding = current
+	if err := save(state); err != nil {
+		return defaultOnboardingState(), err
+	}
+	return current, nil
 }
 
 func load() (State, error) {
@@ -136,9 +189,6 @@ func save(state State) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
 
 	content, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
@@ -146,30 +196,7 @@ func save(state State) error {
 	}
 	content = append(content, '\n')
 
-	temp, err := os.CreateTemp(filepath.Dir(path), ".app-state-*.tmp")
-	if err != nil {
-		return err
-	}
-	tempPath := temp.Name()
-	defer os.Remove(tempPath)
-
-	if err := temp.Chmod(0o600); err != nil {
-		temp.Close()
-		return err
-	}
-	if _, err := temp.Write(content); err != nil {
-		temp.Close()
-		return err
-	}
-	if err := temp.Sync(); err != nil {
-		temp.Close()
-		return err
-	}
-	if err := temp.Close(); err != nil {
-		return err
-	}
-
-	return replaceFile(tempPath, path)
+	return atomicfile.Write(path, content, 0o600)
 }
 
 func defaultOnboardingState() OnboardingState {
@@ -181,8 +208,12 @@ func defaultOnboardingState() OnboardingState {
 func normalizeOnboardingState(state OnboardingState) OnboardingState {
 	status := strings.TrimSpace(state.Status)
 	switch status {
-	case OnboardingStarted, OnboardingDismissed, OnboardingCompleted:
+	case OnboardingStarted, OnboardingDismissed, OnboardingCompleted, OnboardingSuppressed:
 	default:
+		status = OnboardingUnseen
+	}
+	suppressionReason := normalizeSuppressionReason(status, state.SuppressionReason)
+	if status == OnboardingSuppressed && suppressionReason == "" {
 		status = OnboardingUnseen
 	}
 
@@ -192,10 +223,11 @@ func normalizeOnboardingState(state OnboardingState) OnboardingState {
 	}
 
 	return OnboardingState{
-		Version:   strings.TrimSpace(state.Version),
-		Status:    status,
-		LastStep:  lastStep,
-		UpdatedAt: strings.TrimSpace(state.UpdatedAt),
+		Version:           strings.TrimSpace(state.Version),
+		Status:            status,
+		LastStep:          lastStep,
+		SuppressionReason: suppressionReason,
+		UpdatedAt:         strings.TrimSpace(state.UpdatedAt),
 	}
 }
 
@@ -213,5 +245,46 @@ func validateOnboardingState(state OnboardingState) (OnboardingState, error) {
 	if normalized.LastStep > maxOnboardingLastStep {
 		return OnboardingState{}, fmt.Errorf("onboarding last step is too large")
 	}
+	if normalized.Status == OnboardingSuppressed && normalized.SuppressionReason == "" {
+		return OnboardingState{}, fmt.Errorf("onboarding suppression reason is empty")
+	}
 	return normalized, nil
+}
+
+func normalizeSuppressionReason(status string, reason string) string {
+	if status != OnboardingSuppressed {
+		return ""
+	}
+	switch strings.TrimSpace(reason) {
+	case SuppressedExistingUser, SuppressedTemplateMissing:
+		return strings.TrimSpace(reason)
+	default:
+		return ""
+	}
+}
+
+func detectHistoricalUserData() bool {
+	appStatePath, err := paths.AppStatePath()
+	if err != nil {
+		return false
+	}
+	if _, err := os.Stat(appStatePath); err == nil {
+		// app-state.json 是新手引导状态的唯一来源；文件存在时直接服从其状态。
+		return false
+	} else if !os.IsNotExist(err) {
+		return true
+	}
+
+	configDir, err := paths.ConfigDir()
+	if err != nil {
+		return false
+	}
+	entries, err := os.ReadDir(configDir)
+	if os.IsNotExist(err) {
+		return false
+	}
+	if err != nil {
+		return true
+	}
+	return len(entries) > 0
 }

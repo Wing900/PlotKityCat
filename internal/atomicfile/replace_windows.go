@@ -1,6 +1,6 @@
 //go:build windows
 
-package appstate
+package atomicfile
 
 import "golang.org/x/sys/windows"
 

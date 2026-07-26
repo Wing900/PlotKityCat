@@ -1,11 +1,21 @@
 package bridge
 
+import "plotkitycat/internal/appstate"
+
 func (a *App) GetOnboardingState() (OnboardingState, error) {
 	state, err := a.appStateStore.LoadOnboarding()
 	if err != nil {
 		return OnboardingState{}, err
 	}
-	return mapOnboardingState(state.Version, state.Status, state.LastStep, state.UpdatedAt), nil
+	return mapOnboardingState(state), nil
+}
+
+func (a *App) ResolveOnboardingState(version string, templateAvailable bool) (OnboardingState, error) {
+	state, err := a.appStateStore.ResolveOnboarding(version, templateAvailable)
+	if err != nil {
+		return OnboardingState{}, err
+	}
+	return mapOnboardingState(state), nil
 }
 
 func (a *App) UpdateOnboardingState(version string, status string, lastStep int) (OnboardingState, error) {
@@ -13,14 +23,15 @@ func (a *App) UpdateOnboardingState(version string, status string, lastStep int)
 	if err != nil {
 		return OnboardingState{}, err
 	}
-	return mapOnboardingState(state.Version, state.Status, state.LastStep, state.UpdatedAt), nil
+	return mapOnboardingState(state), nil
 }
 
-func mapOnboardingState(version string, status string, lastStep int, updatedAt string) OnboardingState {
+func mapOnboardingState(state appstate.OnboardingState) OnboardingState {
 	return OnboardingState{
-		Version:   version,
-		Status:    status,
-		LastStep:  lastStep,
-		UpdatedAt: updatedAt,
+		Version:           state.Version,
+		Status:            state.Status,
+		LastStep:          state.LastStep,
+		SuppressionReason: state.SuppressionReason,
+		UpdatedAt:         state.UpdatedAt,
 	}
 }

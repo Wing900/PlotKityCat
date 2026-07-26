@@ -16,6 +16,7 @@ export interface OnboardingDeps {
    * 返回 false 表示工作区缺失或切换失败，教程将安全跳过。
    */
   enterOnboardingWorkspace: () => Promise<boolean>;
+  isTemplateAvailable: () => boolean;
   prepareOnboardingLayout?: () => void;
   stateRepository?: OnboardingStateRepository;
 }
@@ -36,6 +37,9 @@ export function useOnboarding(deps: OnboardingDeps) {
     try {
       const entered = await deps.enterOnboardingWorkspace();
       if (!entered) {
+        if (!deps.isTemplateAvailable()) {
+          await stateRepository.resolveAutoStart(false);
+        }
         isStarting = false;
         return false;
       }
@@ -131,15 +135,9 @@ export function useOnboarding(deps: OnboardingDeps) {
 
   async function resolveAutoStartStep(): Promise<number | null> {
     try {
-      const state = await stateRepository.load();
-      if (
-        state.status === "unseen" &&
-        stateRepository.hasLegacyCompletion()
-      ) {
-        await stateRepository.update("completed", 0);
-        return null;
-      }
-
+      const state = await stateRepository.resolveAutoStart(
+        deps.isTemplateAvailable(),
+      );
       if (state.status === "unseen") return 0;
       if (state.status === "started" && state.version === TOUR_VERSION) {
         return state.lastStep;
@@ -152,17 +150,13 @@ export function useOnboarding(deps: OnboardingDeps) {
   }
 
   async function persistState(
-    status: Exclude<OnboardingStatus, "unseen">,
+    status: Extract<OnboardingStatus, "started" | "dismissed" | "completed">,
     lastStep: number,
   ) {
     try {
       await stateRepository.update(status, lastStep);
     } catch (error) {
       console.warn("[onboarding] 保存状态失败", error);
-    }
-
-    if (status === "dismissed" || status === "completed") {
-      stateRepository.saveLegacyCompletion();
     }
   }
 

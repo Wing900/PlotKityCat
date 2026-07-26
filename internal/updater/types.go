@@ -11,6 +11,7 @@ type Manifest struct {
 type ReleaseArtifact struct {
 	URL    string `json:"url"`
 	SHA256 string `json:"sha256"`
+	Size   int64  `json:"size,omitempty"`
 }
 
 type State struct {

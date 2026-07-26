@@ -296,6 +296,7 @@
 
 .editor-ai-overlay.finishing {
   opacity: 0;
+  pointer-events: none;
   transition: opacity 2s var(--ease-out);
 }
 

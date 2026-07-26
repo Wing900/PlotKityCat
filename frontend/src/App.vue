@@ -22,12 +22,17 @@ import UpdateRestartDialog from "./components/dialogs/UpdateRestartDialog.vue";
 import { usePlotWorkspace } from "./features/plot/model/workspace/usePlotWorkspace";
 import { useTheme } from "./composables/useTheme";
 import { useOnboarding } from "./features/onboarding/useOnboarding";
+import { ONBOARDING_WORKSPACE_NAME } from "./features/onboarding/onboardingTemplate";
 
 const workspace = reactive(usePlotWorkspace());
 const theme = reactive(useTheme());
 
 const onboarding = useOnboarding({
   enterOnboardingWorkspace: workspace.enterOnboardingWorkspace,
+  isTemplateAvailable: () =>
+    workspace.workspaces.some(
+      (item) => item.name === ONBOARDING_WORKSPACE_NAME,
+    ),
   prepareOnboardingLayout: workspace.showSplitPane,
 });
 const isSceneSwitching = ref(false);
@@ -211,9 +216,9 @@ onBeforeUnmount(() => {
         <section class="editor-workspace-column">
           <EditorPane
             :code="workspace.codeContent"
-            :disabled="workspace.isAIGenerating || aiOverlayFinishing"
+            :disabled="workspace.isAIGenerating"
             :is-scene-switching="isSceneSwitching"
-            :is-streaming="workspace.isAIGenerating || aiOverlayFinishing"
+            :is-streaming="workspace.isAIGenerating"
             :ai-overlay-active="aiOverlayVisible && !aiOverlayFinishing"
             :ai-overlay-finishing="aiOverlayFinishing"
             :animated-line-ranges="workspace.repairAnimatedLineRanges"
@@ -226,7 +231,7 @@ onBeforeUnmount(() => {
 
           <EditorCornerPocket
             v-if="workspace.workspaceLayoutMode !== 'note'"
-            :disabled="workspace.isAIGenerating || workspace.isDesigning || aiOverlayFinishing || designOverlayFinishing"
+            :disabled="workspace.isAIGenerating || workspace.isDesigning"
             @optimize="workspace.openCodeAIOptimizeDialog()"
           />
 
@@ -236,11 +241,6 @@ onBeforeUnmount(() => {
             @select="workspace.selectCodeAIOptimizeVersion"
           />
         </section>
-
-        <div
-          class="workspace-divider-hotzone"
-          aria-hidden="true"
-        ></div>
 
         <NotePanel
           :current-file="workspace.currentFile"

@@ -12,6 +12,15 @@
   - `stable/manifest.json`
   - `releases/PlotKityCat-版本号-windows-amd64.exe`
 
+更新安装安全模型：
+
+- 下载阶段校验 HTTPS、文件大小与 SHA-256
+- 安装前再次校验下载文件，并在目标目录生成 Staged EXE
+- Installer 完成 Ready Handshake 后，应用通过 Wails Graceful Shutdown 退出
+- EXE 使用 Windows `MoveFileEx` Atomic Replace
+- 新进程在 Startup Health Window 内退出时，Installer 自动 Rollback 并重启旧版本
+- `config/updates/state.json` 使用 Atomic File Write，失败后保留重试状态
+
 runtime 约定：
 
 - `resources/runtime/runtime.7z` 作为 release asset 外部分发
@@ -55,6 +64,9 @@ powershell -ExecutionPolicy Bypass -File .\tools\build-versioned-app.ps1 -Versio
 产物：
 
 - [build/bin/PlotKityCat.exe](/D:/projects/PlotKityCat/build/bin/PlotKityCat.exe)
+- `build/bin/build-metadata.json`
+
+后续发布脚本会核对 `build-metadata.json` 与目标版本；版本不一致时直接终止，防止旧 EXE 被包装成新版本。
 
 ## 3. 生成在线更新产物
 
@@ -82,6 +94,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\prepare-update-release.ps1 -Ver
 说明：
 
 - `manifest.json` 会自动写入下载地址和 sha256
+- `manifest.json` 会写入 EXE 字节数，客户端下载时同时校验
 - 默认下载地址前缀是 `https://update.5051001.xyz/plotkitycat/releases`
 
 ## 4. 生成完整下载包
@@ -110,6 +123,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\package-release.ps1 -Version 0.
 - 因此发布完整包前，必须先在本地准备好 `resources/runtime/runtime.7z`
 - 并且必须准备好 `zoomit.exe`；推荐固定放在 `resources/screeningzoom/zoomit.exe`
 - 当前推荐先按 [RUNTIME_BUILD.md](/D:/projects/plotkitycat/RUNTIME_BUILD.md:1) 用裁剪开关重建 runtime，再执行完整打包
+- 在线更新仍只替换 EXE；新增或调整 `Scripts/`、Runtime、ScreeningZoom 时，必须同步发布完整 zip
 
 `package-release.ps1` 对 `zoomit.exe` 的查找顺序固定为：
 
@@ -173,6 +187,17 @@ curl.exe -I https://update.5051001.xyz/plotkitycat/releases/PlotKityCat-0.0.3.1-
 4. 执行 `.\tools\package-release.ps1`
 5. 上传 `build/update/版本号/` 里的 `exe`
 6. 把 `build/update/版本号/manifest.json` 覆盖到服务器 `stable/manifest.json`
+
+### Updater Bootstrap 发布
+
+Updater 修复会从安装了新 Updater 的版本开始生效。旧版本升级到首个修复版本时，安装动作仍由旧 Updater 执行。
+
+安全发布顺序：
+
+1. 首个修复版本优先发布完整 zip
+2. 确认用户运行的 EXE 已包含新 Updater
+3. 后续版本再验证 Check → Download → Graceful Restart → Health Check → Cleanup
+4. 验证成功后更新 `stable/manifest.json`
 
 ## 8. 固定约定
 

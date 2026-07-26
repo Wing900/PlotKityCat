@@ -1,19 +1,21 @@
 package updater
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"bytes"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"plotkitycat/internal/paths"
@@ -24,16 +26,26 @@ import (
 const (
 	defaultManifestURL = "https://update.5051001.xyz/plotkitycat/stable/manifest.json"
 	checkTTL           = 12 * time.Hour
+	maxManifestSize    = 1 << 20
+	maxUpdateSize      = 512 << 20
+	installerReadyTTL  = 30 * time.Second
 )
+
+var releaseManifestURL = defaultManifestURL
 
 type Service struct {
 	client         *http.Client
 	downloadClient *http.Client
 	manifestURL    string
+	mu             sync.Mutex
 	store          *Store
 }
 
 func NewService() *Service {
+	manifestURL := strings.TrimSpace(releaseManifestURL)
+	if err := validateHTTPSURL(manifestURL); err != nil {
+		manifestURL = defaultManifestURL
+	}
 	return &Service{
 		client: &http.Client{
 			Timeout: 20 * time.Second,
@@ -41,13 +53,16 @@ func NewService() *Service {
 		downloadClient: &http.Client{
 			Timeout: 10 * time.Minute,
 		},
-		manifestURL: defaultManifestURL,
+		manifestURL: manifestURL,
 		store:       NewStore(),
 	}
 }
 
 func (s *Service) Status() (Status, error) {
-	state, err := s.store.Load()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	state, err := s.loadState()
 	if err != nil {
 		return Status{}, err
 	}
@@ -56,11 +71,14 @@ func (s *Service) Status() (Status, error) {
 }
 
 func (s *Service) Check(ctx context.Context, force bool) (Status, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	state, err := s.store.Load()
+	state, err := s.loadState()
 	if err != nil {
 		return Status{}, err
 	}
@@ -82,10 +100,11 @@ func (s *Service) Check(ctx context.Context, force bool) (Status, error) {
 	state.LastKnownArtifact = strings.TrimSpace(manifest.Windows.URL)
 	state.LastKnownAvailable = compareVersions(manifest.Version, version.Current()) > 0
 	if state.DownloadedVersion != state.LatestVersion {
-		state.DownloadedVersion = ""
-		state.DownloadedPath = ""
-		state.DownloadedSHA256 = ""
-		state.LastKnownDownloaded = false
+		previousDownload := state.DownloadedPath
+		clearDownloadedState(&state, "")
+		if safePath, ok := safeDownloadedPath(previousDownload); ok {
+			_ = os.Remove(safePath)
+		}
 	}
 	state.LastKnownMessage = buildMessage(state.LastKnownAvailable, state.DownloadedVersion == state.LatestVersion, manifest.Version)
 	if err := s.store.Save(state); err != nil {
@@ -96,11 +115,14 @@ func (s *Service) Check(ctx context.Context, force bool) (Status, error) {
 }
 
 func (s *Service) Download(ctx context.Context) (Status, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	state, err := s.store.Load()
+	state, err := s.loadState()
 	if err != nil {
 		return Status{}, err
 	}
@@ -146,18 +168,42 @@ func (s *Service) Download(ctx context.Context) (Status, error) {
 	if resp.StatusCode != http.StatusOK {
 		return Status{}, fmt.Errorf("下载更新失败: %s", resp.Status)
 	}
+	if resp.Request == nil || resp.Request.URL == nil ||
+		!strings.EqualFold(resp.Request.URL.Scheme, "https") {
+		return Status{}, fmt.Errorf("更新下载发生了不安全的重定向")
+	}
+	if manifest.Windows.Size > maxUpdateSize {
+		return Status{}, fmt.Errorf("更新包超过大小限制")
+	}
+	if resp.ContentLength > maxUpdateSize {
+		return Status{}, fmt.Errorf("更新包超过大小限制")
+	}
 
-	file, err := os.Create(partPath)
+	file, err := os.OpenFile(partPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
 	if err != nil {
 		return Status{}, err
 	}
 
 	hash := sha256.New()
-	_, copyErr := io.Copy(io.MultiWriter(file, hash), resp.Body)
+	written, copyErr := io.Copy(
+		io.MultiWriter(file, hash),
+		io.LimitReader(resp.Body, maxUpdateSize+1),
+	)
+	if copyErr == nil && written > maxUpdateSize {
+		copyErr = fmt.Errorf("更新包超过大小限制")
+	}
+	if copyErr == nil && manifest.Windows.Size > 0 && written != manifest.Windows.Size {
+		copyErr = fmt.Errorf("更新包大小与 Manifest 不一致")
+	}
+	syncErr := file.Sync()
 	closeErr := file.Close()
 	if copyErr != nil {
 		_ = os.Remove(partPath)
 		return Status{}, copyErr
+	}
+	if syncErr != nil {
+		_ = os.Remove(partPath)
+		return Status{}, syncErr
 	}
 	if closeErr != nil {
 		_ = os.Remove(partPath)
@@ -170,6 +216,10 @@ func (s *Service) Download(ctx context.Context) (Status, error) {
 		return Status{}, fmt.Errorf("更新包校验失败")
 	}
 
+	if err := os.Remove(targetPath); err != nil && !os.IsNotExist(err) {
+		_ = os.Remove(partPath)
+		return Status{}, err
+	}
 	if err := os.Rename(partPath, targetPath); err != nil {
 		_ = os.Remove(partPath)
 		return Status{}, err
@@ -194,80 +244,476 @@ func (s *Service) Download(ctx context.Context) (Status, error) {
 }
 
 func (s *Service) InstallAndRestart() error {
-	state, err := s.store.Load()
-	if err != nil {
-		return err
-	}
-	if strings.TrimSpace(state.DownloadedVersion) == "" || strings.TrimSpace(state.DownloadedPath) == "" {
-		return fmt.Errorf("没有可安装的更新包")
-	}
-	if !fileExists(state.DownloadedPath) {
-		return fmt.Errorf("下载的更新包不存在: %s", state.DownloadedPath)
-	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	exePath, err := os.Executable()
+	state, err := s.loadState()
 	if err != nil {
 		return err
 	}
 
-	scriptPath, err := writeUpdateScript(exePath, state.DownloadedPath, os.Getpid())
+	newExe, expectedSHA256, err := validateDownloadedUpdate(state)
+	if err != nil {
+		validationErr := err
+		downloadedPath := state.DownloadedPath
+		clearDownloadedState(&state, "更新包无效，请重新下载")
+		if err := s.store.Save(state); err != nil {
+			return fmt.Errorf("%v；清理下载状态失败: %w", validationErr, err)
+		}
+		if safePath, ok := safeDownloadedPath(downloadedPath); ok {
+			_ = os.Remove(safePath)
+		}
+		return validationErr
+	}
+
+	targetExe, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	targetExe, err = filepath.Abs(targetExe)
 	if err != nil {
 		return err
 	}
 
-	nextState := state
-	nextState.LastKnownAvailable = false
-	nextState.LastKnownDownloaded = false
-	nextState.LastKnownMessage = "更新已安装，正在重新启动"
-	nextState.DownloadedVersion = ""
-	nextState.DownloadedPath = ""
-	nextState.DownloadedSHA256 = ""
-	_ = s.store.Save(nextState)
+	stagedExe := targetExe + ".update-new"
+	if err := stageExecutable(newExe, stagedExe, expectedSHA256); err != nil {
+		return fmt.Errorf("准备更新文件失败: %w", err)
+	}
 
-	cmd := exec.Command("powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", scriptPath)
+	scriptPath, readyPath, err := writeUpdateScript(
+		targetExe,
+		stagedExe,
+		newExe,
+		expectedSHA256,
+		os.Getpid(),
+	)
+	if err != nil {
+		_ = os.Remove(stagedExe)
+		return err
+	}
+
+	cmd := exec.Command(
+		"powershell.exe",
+		"-NoLogo",
+		"-NoProfile",
+		"-NonInteractive",
+		"-ExecutionPolicy",
+		"Bypass",
+		"-File",
+		scriptPath,
+	)
 	cmd.SysProcAttr = processutil.WithoutConsoleWindow()
 	if err := cmd.Start(); err != nil {
+		_ = os.Remove(stagedExe)
+		_ = os.Remove(scriptPath)
+		_ = os.Remove(readyPath)
 		return err
 	}
 
-	os.Exit(0)
+	if err := waitForInstallerReady(readyPath, installerReadyTTL); err != nil {
+		_ = cmd.Process.Kill()
+		_, _ = cmd.Process.Wait()
+		_ = os.Remove(stagedExe)
+		_ = os.Remove(scriptPath)
+		_ = os.Remove(readyPath)
+		return err
+	}
+	if err := cmd.Process.Release(); err != nil {
+		return fmt.Errorf("释放更新安装器进程句柄失败: %w", err)
+	}
+
 	return nil
 }
 
-func writeUpdateScript(targetExe, newExe string, mainPid int) (string, error) {
-	script := fmt.Sprintf(`$target = %s
-$new = %s
+func writeUpdateScript(
+	targetExe string,
+	stagedExe string,
+	downloadedExe string,
+	expectedSHA256 string,
+	mainPid int,
+) (string, string, error) {
+	tmpDir := os.TempDir()
+	suffix := fmt.Sprintf("%d-%d", mainPid, time.Now().UnixNano())
+	scriptPath := filepath.Join(tmpDir, "plotkitycat-update-"+suffix+".ps1")
+	readyPath := filepath.Join(tmpDir, "plotkitycat-update-"+suffix+".ready")
+
+	script := fmt.Sprintf(`$ErrorActionPreference = 'Stop'
+$target = %s
+$staged = %s
+$downloaded = %s
+$expectedSha256 = %s
+$readyFile = %s
 $mainPid = %d
 $logFile = Join-Path $env:TEMP 'plotkitycat-update.log'
-function Log($msg) { Add-Content -LiteralPath $logFile -Value ("[" + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + "] " + $msg) }
-Log "update started target=$target new=$new mainPid=$mainPid"
-for ($i=0; $i -lt 150; $i++) {
-  $p = Get-Process -Id $mainPid -ErrorAction SilentlyContinue
-  if (-not $p) { Log "main exe exited"; break }
-  Start-Sleep -Milliseconds 200
+function Log($msg) {
+  try {
+    Add-Content -LiteralPath $logFile -Value ("[" + (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') + "] " + $msg)
+  } catch {}
 }
-Remove-Item ($target + ".old") -Force -ErrorAction SilentlyContinue
-$ok = $false
-for ($i=0; $i -lt 10; $i++) {
-  try { Copy-Item -LiteralPath $new -Destination $target -Force; $ok = $true; Log "copy ok"; break }
-  catch { Log ("copy fail " + $i + ": " + $_.Exception.Message); Start-Sleep -Milliseconds 500 }
-}
-if (-not $ok) { Log "copy permanent fail"; exit 1 }
-try { Start-Process -FilePath $target; Log "relaunched" }
-catch { Log ("relaunch fail: " + $_.Exception.Message) }
-Remove-Item $PSCommandPath -Force -ErrorAction SilentlyContinue
-`, psQuote(targetExe), psQuote(newExe), mainPid)
 
-	tmpDir := os.TempDir()
-	scriptPath := filepath.Join(tmpDir, fmt.Sprintf("plotkitycat-update-%d.ps1", mainPid))
-	if err := os.WriteFile(scriptPath, []byte(script), 0o644); err != nil {
-		return "", err
+Add-Type @'
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+
+public static class PlotKityCatAtomicFile {
+    private const int MOVEFILE_REPLACE_EXISTING = 0x1;
+    private const int MOVEFILE_WRITE_THROUGH = 0x8;
+
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool MoveFileEx(string existingName, string newName, int flags);
+
+    public static void Replace(string source, string target) {
+        if (!MoveFileEx(source, target, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) {
+            throw new Win32Exception(Marshal.GetLastWin32Error());
+        }
+    }
+}
+'@
+
+function Replace-File($source, $destination) {
+  [PlotKityCatAtomicFile]::Replace($source, $destination)
+}
+
+$backup = $target + '.old'
+$mainExited = $false
+$swapped = $false
+
+try {
+  if (-not (Test-Path -LiteralPath $target -PathType Leaf)) {
+    throw "target executable is missing"
+  }
+  if (-not (Test-Path -LiteralPath $staged -PathType Leaf)) {
+    throw "staged executable is missing"
+  }
+  $actualSha256 = (Get-FileHash -LiteralPath $staged -Algorithm SHA256).Hash.ToLowerInvariant()
+  if ($actualSha256 -ne $expectedSha256) {
+    throw "staged executable hash mismatch"
+  }
+
+  Set-Content -LiteralPath $readyFile -Value $PID -Encoding ASCII
+  Log "installer ready target=$target mainPid=$mainPid"
+
+  for ($i = 0; $i -lt 600; $i++) {
+    $mainProcess = Get-Process -Id $mainPid -ErrorAction SilentlyContinue
+    if (-not $mainProcess) {
+      $mainExited = $true
+      Log "main process exited"
+      break
+    }
+    Start-Sleep -Milliseconds 200
+  }
+  if (-not $mainExited) {
+    throw "main process did not exit within 120 seconds"
+  }
+
+  Start-Sleep -Milliseconds 300
+  Remove-Item -LiteralPath $backup -Force -ErrorAction SilentlyContinue
+  Copy-Item -LiteralPath $target -Destination $backup -Force
+  Replace-File $staged $target
+  $swapped = $true
+  Log "atomic replacement completed"
+
+  $workingDirectory = Split-Path -Parent $target
+  $launched = Start-Process -FilePath $target -WorkingDirectory $workingDirectory -PassThru
+  Start-Sleep -Seconds 5
+  $launched.Refresh()
+  if ($launched.HasExited) {
+    throw "updated process exited during startup health window"
+  }
+
+  Remove-Item -LiteralPath $backup -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $downloaded -Force -ErrorAction SilentlyContinue
+  Remove-Item -LiteralPath $readyFile -Force -ErrorAction SilentlyContinue
+  Log "update succeeded and application relaunched"
+  Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue
+  exit 0
+} catch {
+  Log ("update failed: " + $_.Exception.Message)
+  Remove-Item -LiteralPath $readyFile -Force -ErrorAction SilentlyContinue
+
+  if ($mainExited) {
+    $canRelaunch = -not $swapped
+    if ($swapped -and (Test-Path -LiteralPath $backup -PathType Leaf)) {
+      try {
+        Replace-File $backup $target
+        $swapped = $false
+        $canRelaunch = $true
+        Log "rollback completed"
+      } catch {
+        Log ("rollback failed: " + $_.Exception.Message)
+      }
+    }
+
+    if ($canRelaunch -and (Test-Path -LiteralPath $target -PathType Leaf)) {
+      try {
+        $workingDirectory = Split-Path -Parent $target
+        Start-Process -FilePath $target -WorkingDirectory $workingDirectory
+        Log "previous application relaunched"
+      } catch {
+        Log ("previous application relaunch failed: " + $_.Exception.Message)
+      }
+    }
+  }
+
+  Remove-Item -LiteralPath $staged -Force -ErrorAction SilentlyContinue
+  exit 1
+}
+`,
+		psQuote(targetExe),
+		psQuote(stagedExe),
+		psQuote(downloadedExe),
+		psQuote(expectedSHA256),
+		psQuote(readyPath),
+		mainPid,
+	)
+
+	// Windows PowerShell 5.1 requires a BOM to decode non-ASCII paths reliably.
+	content := append([]byte{0xef, 0xbb, 0xbf}, []byte(script)...)
+	if err := os.WriteFile(scriptPath, content, 0o600); err != nil {
+		return "", "", err
 	}
-	return scriptPath, nil
+	return scriptPath, readyPath, nil
 }
 
 func psQuote(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", "''") + "'"
+}
+
+func (s *Service) loadState() (State, error) {
+	state, err := s.store.Load()
+	if err != nil {
+		return State{}, err
+	}
+
+	available := compareVersions(state.LatestVersion, version.Current()) > 0
+	changed := state.LastKnownAvailable != available
+	state.LastKnownAvailable = available
+
+	if state.DownloadedVersion != "" &&
+		compareVersions(state.DownloadedVersion, version.Current()) <= 0 {
+		downloadedPath := state.DownloadedPath
+		clearDownloadedState(&state, "更新已安装")
+		changed = true
+
+		if changed {
+			if err := s.store.Save(state); err != nil {
+				return State{}, err
+			}
+		}
+		if safePath, ok := safeDownloadedPath(downloadedPath); ok {
+			_ = os.Remove(safePath)
+		}
+		return state, nil
+	}
+
+	if state.DownloadedVersion != "" {
+		downloadedPath, safePath := safeDownloadedPath(state.DownloadedPath)
+		if !safePath ||
+			!fileExists(downloadedPath) ||
+			!isValidSHA256(strings.TrimSpace(state.DownloadedSHA256)) {
+			clearDownloadedState(&state, buildMessage(
+				state.LastKnownAvailable,
+				false,
+				state.LatestVersion,
+			))
+			changed = true
+		}
+	}
+
+	if changed {
+		state.LastKnownMessage = buildMessage(
+			state.LastKnownAvailable,
+			state.LastKnownDownloaded,
+			state.LatestVersion,
+		)
+		if err := s.store.Save(state); err != nil {
+			return State{}, err
+		}
+	}
+
+	return state, nil
+}
+
+func clearDownloadedState(state *State, message string) {
+	if state == nil {
+		return
+	}
+	state.DownloadedVersion = ""
+	state.DownloadedPath = ""
+	state.DownloadedSHA256 = ""
+	state.LastKnownDownloaded = false
+	state.LastKnownMessage = strings.TrimSpace(message)
+}
+
+func validateDownloadedUpdate(state State) (string, string, error) {
+	versionValue := strings.TrimSpace(state.DownloadedVersion)
+	if !isValidVersion(versionValue) {
+		return "", "", fmt.Errorf("没有可安装的更新包")
+	}
+
+	expectedName := fmt.Sprintf(
+		"PlotKityCat-%s-windows-amd64.exe.new",
+		versionValue,
+	)
+	safePath, ok := safeDownloadedPath(state.DownloadedPath)
+	if !ok || filepath.Base(safePath) != expectedName {
+		return "", "", fmt.Errorf("下载的更新包路径无效")
+	}
+
+	info, err := os.Lstat(safePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", "", fmt.Errorf("下载的更新包不存在")
+		}
+		return "", "", err
+	}
+	if !info.Mode().IsRegular() {
+		return "", "", fmt.Errorf("下载的更新包类型无效")
+	}
+
+	expectedSHA256 := strings.ToLower(strings.TrimSpace(state.DownloadedSHA256))
+	if !isValidSHA256(expectedSHA256) {
+		return "", "", fmt.Errorf("下载的更新包缺少有效 SHA-256")
+	}
+	actualSHA256, err := hashFile(safePath)
+	if err != nil {
+		return "", "", err
+	}
+	if actualSHA256 != expectedSHA256 {
+		return "", "", fmt.Errorf("安装前校验失败，更新包可能已被修改")
+	}
+
+	return safePath, expectedSHA256, nil
+}
+
+func safeDownloadedPath(value string) (string, bool) {
+	updatesDir, err := paths.UpdatesDir()
+	if err != nil {
+		return "", false
+	}
+	updatesDir, err = filepath.Abs(updatesDir)
+	if err != nil {
+		return "", false
+	}
+	candidate, err := filepath.Abs(strings.TrimSpace(value))
+	if err != nil {
+		return "", false
+	}
+	relative, err := filepath.Rel(updatesDir, candidate)
+	if err != nil ||
+		relative == "." ||
+		filepath.IsAbs(relative) ||
+		relative == ".." ||
+		strings.HasPrefix(relative, ".."+string(filepath.Separator)) ||
+		filepath.Dir(relative) != "." {
+		return "", false
+	}
+	return candidate, true
+}
+
+func stageExecutable(source string, destination string, expectedSHA256 string) error {
+	sourceFile, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+	defer sourceFile.Close()
+
+	_ = os.Remove(destination)
+	destinationFile, err := os.OpenFile(
+		destination,
+		os.O_CREATE|os.O_EXCL|os.O_WRONLY,
+		0o700,
+	)
+	if err != nil {
+		return err
+	}
+
+	hash := sha256.New()
+	_, copyErr := io.Copy(io.MultiWriter(destinationFile, hash), sourceFile)
+	syncErr := destinationFile.Sync()
+	closeErr := destinationFile.Close()
+	if copyErr != nil {
+		_ = os.Remove(destination)
+		return copyErr
+	}
+	if syncErr != nil {
+		_ = os.Remove(destination)
+		return syncErr
+	}
+	if closeErr != nil {
+		_ = os.Remove(destination)
+		return closeErr
+	}
+
+	actualSHA256 := hex.EncodeToString(hash.Sum(nil))
+	if actualSHA256 != expectedSHA256 {
+		_ = os.Remove(destination)
+		return fmt.Errorf("暂存文件 SHA-256 校验失败")
+	}
+	return nil
+}
+
+func hashFile(path string) (string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	hash := sha256.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(hash.Sum(nil)), nil
+}
+
+func waitForInstallerReady(path string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if fileExists(path) {
+			return nil
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	return fmt.Errorf("更新安装器启动超时，应用保持运行")
+}
+
+func isValidSHA256(value string) bool {
+	if len(value) != sha256.Size*2 {
+		return false
+	}
+	decoded, err := hex.DecodeString(value)
+	return err == nil && len(decoded) == sha256.Size
+}
+
+func isValidVersion(value string) bool {
+	value = strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(value, "v"), "V"))
+	if value == "" || len(value) > 64 {
+		return false
+	}
+	for _, part := range strings.Split(value, ".") {
+		if part == "" {
+			return false
+		}
+		for _, char := range part {
+			if char < '0' || char > '9' {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func validateHTTPSURL(value string) error {
+	parsed, err := url.Parse(strings.TrimSpace(value))
+	if err != nil {
+		return err
+	}
+	if !strings.EqualFold(parsed.Scheme, "https") || parsed.Host == "" {
+		return fmt.Errorf("更新地址必须使用 HTTPS")
+	}
+	return nil
 }
 
 func (s *Service) fetchManifest(ctx context.Context) (Manifest, error) {
@@ -285,10 +731,17 @@ func (s *Service) fetchManifest(ctx context.Context) (Manifest, error) {
 	if resp.StatusCode != http.StatusOK {
 		return Manifest{}, fmt.Errorf("检查更新失败: %s", resp.Status)
 	}
+	if resp.Request == nil || resp.Request.URL == nil ||
+		!strings.EqualFold(resp.Request.URL.Scheme, "https") {
+		return Manifest{}, fmt.Errorf("更新描述发生了不安全的重定向")
+	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxManifestSize+1))
 	if err != nil {
 		return Manifest{}, err
+	}
+	if len(body) > maxManifestSize {
+		return Manifest{}, fmt.Errorf("更新描述超过大小限制")
 	}
 	body = bytes.TrimPrefix(body, []byte("\xef\xbb\xbf"))
 
@@ -296,25 +749,30 @@ func (s *Service) fetchManifest(ctx context.Context) (Manifest, error) {
 	if err := json.Unmarshal(body, &manifest); err != nil {
 		return Manifest{}, err
 	}
-	if strings.TrimSpace(manifest.Version) == "" {
-		return Manifest{}, fmt.Errorf("更新描述缺少版本号")
+	if !isValidVersion(manifest.Version) {
+		return Manifest{}, fmt.Errorf("更新描述包含无效版本号")
 	}
-	if strings.TrimSpace(manifest.Windows.URL) == "" {
-		return Manifest{}, fmt.Errorf("更新描述缺少下载地址")
+	if err := validateHTTPSURL(manifest.Windows.URL); err != nil {
+		return Manifest{}, err
 	}
-	if strings.TrimSpace(manifest.Windows.SHA256) == "" {
-		return Manifest{}, fmt.Errorf("更新描述缺少 sha256")
+	manifest.Windows.SHA256 = strings.ToLower(strings.TrimSpace(manifest.Windows.SHA256))
+	if !isValidSHA256(manifest.Windows.SHA256) {
+		return Manifest{}, fmt.Errorf("更新描述包含无效 SHA-256")
+	}
+	if manifest.Windows.Size < 0 || manifest.Windows.Size > maxUpdateSize {
+		return Manifest{}, fmt.Errorf("更新描述包含无效文件大小")
 	}
 
 	return manifest, nil
 }
 
 func (s *Service) statusFromState(state State) Status {
-	downloaded := state.DownloadedVersion != "" && state.DownloadedVersion == state.LatestVersion && fileExists(state.DownloadedPath)
-	available := state.LastKnownAvailable
-	if compareVersions(state.LatestVersion, version.Current()) > 0 {
-		available = true
-	}
+	downloadedPath, safePath := safeDownloadedPath(state.DownloadedPath)
+	downloaded := safePath &&
+		state.DownloadedVersion != "" &&
+		state.DownloadedVersion == state.LatestVersion &&
+		fileExists(downloadedPath)
+	available := compareVersions(state.LatestVersion, version.Current()) > 0
 
 	message := strings.TrimSpace(state.LastKnownMessage)
 	if message == "" {

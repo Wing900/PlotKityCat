@@ -10,6 +10,7 @@ import { getErrorMessage } from "../../../../lib/errors";
 import { normalizeUpdateStatus } from "./updateStatusHelpers";
 
 export interface WorkspaceUpdatesDeps {
+  beforeInstall?: () => Promise<void>;
   openRunErrorDialog: (message: string, options?: { repairable?: boolean }) => void;
 }
 
@@ -103,10 +104,12 @@ export function useWorkspaceUpdates(deps: WorkspaceUpdatesDeps) {
     }
     isInstallingUpdate.value = true;
     try {
+      await deps.beforeInstall?.();
       await installUpdateAndRestart();
     } catch (error) {
       isInstallingUpdate.value = false;
       isUpdateInstallDialogOpen.value = false;
+      await refreshUpdateStatus();
       deps.openRunErrorDialog(getErrorMessage(error));
     }
   }

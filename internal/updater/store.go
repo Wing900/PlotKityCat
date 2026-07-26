@@ -3,8 +3,8 @@ package updater
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 
+	"plotkitycat/internal/atomicfile"
 	"plotkitycat/internal/paths"
 )
 
@@ -43,14 +43,10 @@ func (s *Store) Save(state State) error {
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-
 	content, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(path, append(content, '\n'), 0o644)
+	return atomicfile.Write(path, append(content, '\n'), 0o600)
 }

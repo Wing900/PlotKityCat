@@ -170,6 +170,10 @@ export function ReorderScripts(arg1, arg2) {
   return window['go']['bridge']['App']['ReorderScripts'](arg1, arg2);
 }
 
+export function ResolveOnboardingState(arg1, arg2) {
+  return window['go']['bridge']['App']['ResolveOnboardingState'](arg1, arg2);
+}
+
 export function SaveAISettings(arg1) {
   return window['go']['bridge']['App']['SaveAISettings'](arg1);
 }

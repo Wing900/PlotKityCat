@@ -4,26 +4,30 @@ export type OnboardingStatus =
   | "unseen"
   | "started"
   | "dismissed"
-  | "completed";
+  | "completed"
+  | "suppressed";
+
+export type OnboardingSuppressionReason =
+  | ""
+  | "existing-user"
+  | "template-missing";
 
 export interface OnboardingState {
   version: string;
   status: OnboardingStatus;
   lastStep: number;
+  suppressionReason: OnboardingSuppressionReason;
   updatedAt: string;
 }
 
 export interface OnboardingStateRepository {
   load: () => Promise<OnboardingState>;
+  resolveAutoStart: (templateAvailable: boolean) => Promise<OnboardingState>;
   update: (
-    status: Exclude<OnboardingStatus, "unseen">,
+    status: Extract<OnboardingStatus, "started" | "dismissed" | "completed">,
     lastStep: number,
   ) => Promise<OnboardingState>;
-  hasLegacyCompletion: () => boolean;
-  saveLegacyCompletion: () => void;
 }
-
-const LEGACY_DONE_KEY = "plotkitycat.onboarding.tour.done";
 
 type BridgeAppCompat = {
   GetOnboardingState?: () => Promise<Partial<OnboardingState>>;
@@ -31,6 +35,10 @@ type BridgeAppCompat = {
     version: string,
     status: string,
     lastStep: number,
+  ) => Promise<Partial<OnboardingState>>;
+  ResolveOnboardingState?: (
+    version: string,
+    templateAvailable: boolean,
   ) => Promise<Partial<OnboardingState>>;
 };
 
@@ -40,6 +48,17 @@ export function createOnboardingStateRepository(): OnboardingStateRepository {
       const value = await callBridge(
         "GetOnboardingState",
         (app) => app.GetOnboardingState?.(),
+      );
+      return normalizeState(value);
+    },
+    async resolveAutoStart(templateAvailable) {
+      const value = await callBridge(
+        "ResolveOnboardingState",
+        (app) =>
+          app.ResolveOnboardingState?.(
+            TOUR_VERSION,
+            templateAvailable,
+          ),
       );
       return normalizeState(value);
     },
@@ -55,20 +74,6 @@ export function createOnboardingStateRepository(): OnboardingStateRepository {
       );
       return normalizeState(value);
     },
-    hasLegacyCompletion() {
-      try {
-        return localStorage.getItem(LEGACY_DONE_KEY) === TOUR_VERSION;
-      } catch {
-        return false;
-      }
-    },
-    saveLegacyCompletion() {
-      try {
-        localStorage.setItem(LEGACY_DONE_KEY, TOUR_VERSION);
-      } catch {
-        // app-state.json 是主存储；WebView 禁用 Storage 时无需中断教程。
-      }
-    },
   };
 }
 
@@ -77,11 +82,20 @@ function normalizeState(value?: Partial<OnboardingState>): OnboardingState {
     typeof value?.lastStep === "number" && Number.isFinite(value.lastStep)
       ? Math.max(0, Math.trunc(value.lastStep))
       : 0;
+  const rawSuppressionReason = normalizeSuppressionReason(value?.suppressionReason);
+  const normalizedStatus = normalizeStatus(value?.status);
+  const status =
+    normalizedStatus === "suppressed" && rawSuppressionReason === ""
+      ? "unseen"
+      : normalizedStatus;
+  const suppressionReason =
+    status === "suppressed" ? rawSuppressionReason : "";
 
   return {
     version: typeof value?.version === "string" ? value.version.trim() : "",
-    status: normalizeStatus(value?.status),
+    status,
     lastStep,
+    suppressionReason,
     updatedAt: typeof value?.updatedAt === "string" ? value.updatedAt : "",
   };
 }
@@ -91,9 +105,20 @@ function normalizeStatus(value: unknown): OnboardingStatus {
     case "started":
     case "dismissed":
     case "completed":
+    case "suppressed":
       return value;
     default:
       return "unseen";
+  }
+}
+
+function normalizeSuppressionReason(value: unknown): OnboardingSuppressionReason {
+  switch (value) {
+    case "existing-user":
+    case "template-missing":
+      return value;
+    default:
+      return "";
   }
 }
 

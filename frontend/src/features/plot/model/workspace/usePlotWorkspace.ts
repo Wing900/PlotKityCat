@@ -38,9 +38,6 @@ export function usePlotWorkspace() {
   const subscription = useWorkspaceSubscription({
     openRunErrorDialog: runErrorDialog.openRunErrorDialog,
   });
-  const updates = useWorkspaceUpdates({
-    openRunErrorDialog: runErrorDialog.openRunErrorDialog,
-  });
   const aiSettingsStore = useWorkspaceAISettings({
     openRunErrorDialog: runErrorDialog.openRunErrorDialog,
     onOpen: () => {
@@ -101,6 +98,14 @@ export function usePlotWorkspace() {
       });
     },
     onError: runErrorDialog.openRunErrorDialog,
+  });
+  const updates = useWorkspaceUpdates({
+    beforeInstall: async () => {
+      await designCardWorkspace.flushPlanSave();
+      await noteWorkspace.flushPendingSave(scriptWorkspace.currentFile.value);
+      await scriptWorkspace.saveCurrentScript();
+    },
+    openRunErrorDialog: runErrorDialog.openRunErrorDialog,
   });
   const packageTransfer = usePackageTransfer({
     noteWorkspace,
@@ -176,8 +181,10 @@ export function usePlotWorkspace() {
   });
 
   onUnmounted(() => {
-    void designCardWorkspace.flushPlanSave();
-    void noteWorkspace.flushPendingSave(scriptWorkspace.currentFile.value);
+    void designCardWorkspace.flushPlanSave().catch(() => undefined);
+    void noteWorkspace
+      .flushPendingSave(scriptWorkspace.currentFile.value)
+      .catch(() => undefined);
     lifecycle.unmount();
     aiActivity.stop();
   });

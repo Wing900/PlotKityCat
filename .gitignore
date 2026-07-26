@@ -25,6 +25,7 @@ nul
 .DS_Store
 Thumbs.db
 /.gocache/
+/.cache/
 /.runtime-pack/
 __pycache__/
 *.py[cod]

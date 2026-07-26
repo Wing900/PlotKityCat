@@ -63,7 +63,7 @@ export function useDesignCardWorkspace(options: DesignCardWorkspaceOptions) {
   }
 
   async function flushPlanSave() {
-    await store.flushPlanSave(activeCard.value);
+    await store.flushPlanSave();
   }
 
   return {

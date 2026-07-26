@@ -1,4 +1,5 @@
 import { computed, ref, watch, type Ref } from "vue";
+import { createAsyncSerialQueue } from "../../../lib/asyncSerialQueue";
 import { getErrorMessage } from "../../../lib/errors";
 import {
   deleteDesignCard,
@@ -20,6 +21,8 @@ export function useDesignCardStore(options: DesignCardStoreOptions) {
 
   let loadingToken = 0;
   let saveTimer = 0;
+  let scheduledPlan: { sceneName: string; cardId: string; plan: string } | null = null;
+  const planSaveQueue = createAsyncSerialQueue();
 
   const sortedCards = computed(() => sortCards(cards.value));
 
@@ -78,37 +81,68 @@ export function useDesignCardStore(options: DesignCardStoreOptions) {
 
   function schedulePlanSave(cardId: string, plan: string) {
     saveState.value = "saving";
+    scheduledPlan = {
+      sceneName: options.currentFile.value,
+      cardId,
+      plan,
+    };
     window.clearTimeout(saveTimer);
     saveTimer = window.setTimeout(() => {
-      void persistPlan(cardId, plan);
+      saveTimer = 0;
+      void consumeScheduledPlan();
     }, planSaveDebounceMs);
   }
 
-  async function persistPlan(cardId: string, plan: string) {
-    if (!options.currentFile.value) {
+  async function persistPlan(sceneName: string, cardId: string, plan: string) {
+    if (!sceneName) {
       saveState.value = "idle";
       return;
     }
     try {
-      const card = await updateDesignCardPlan(options.currentFile.value, cardId, plan);
-      upsertCard(card);
-      saveState.value = "saved";
+      const card = await updateDesignCardPlan(sceneName, cardId, plan);
+      if (options.currentFile.value === sceneName) {
+        upsertCard(card);
+        saveState.value = "saved";
+      }
     } catch (error) {
-      saveState.value = "idle";
+      if (options.currentFile.value === sceneName) {
+        saveState.value = "idle";
+      }
       options.onError(getErrorMessage(error));
-    } finally {
-      saveTimer = 0;
+      throw error;
     }
   }
 
-  async function flushPlanSave(activeCard: DesignCard | null) {
-    if (!saveTimer) {
-      return;
+  function enqueuePlanSave(sceneName: string, cardId: string, plan: string) {
+    return planSaveQueue.enqueue(() => persistPlan(sceneName, cardId, plan));
+  }
+
+  function consumeScheduledPlan() {
+    const planSave = scheduledPlan;
+    scheduledPlan = null;
+    if (!planSave) {
+      return null;
     }
-    window.clearTimeout(saveTimer);
-    saveTimer = 0;
-    if (activeCard) {
-      await persistPlan(activeCard.id, activeCard.plan);
+
+    return enqueuePlanSave(planSave.sceneName, planSave.cardId, planSave.plan);
+  }
+
+  async function flushPlanSave() {
+    while (saveTimer || scheduledPlan || planSaveQueue.current()) {
+      if (saveTimer) {
+        window.clearTimeout(saveTimer);
+        saveTimer = 0;
+      }
+
+      const scheduledSave = consumeScheduledPlan();
+      if (scheduledSave) {
+        await scheduledSave;
+        continue;
+      }
+      const pendingSave = planSaveQueue.current();
+      if (pendingSave) {
+        await pendingSave;
+      }
     }
   }
 

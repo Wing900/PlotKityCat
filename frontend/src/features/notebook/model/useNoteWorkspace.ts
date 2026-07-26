@@ -1,5 +1,6 @@
 import { computed, ref, watch, type Ref } from "vue";
 import type { DesignCard } from "../../designCard/services/designCardTypes";
+import { createAsyncSerialQueue } from "../../../lib/asyncSerialQueue";
 import { getErrorMessage } from "../../../lib/errors";
 import {
   getScriptNote,
@@ -33,11 +34,12 @@ export function useNoteWorkspace(
 
   let saveTimer = 0;
   let loadingToken = 0;
+  const saveQueue = createAsyncSerialQueue();
 
   watch(
     currentFile,
     (filename, previousFilename) => {
-      void flushPendingSave(previousFilename);
+      void flushPendingSave(previousFilename).catch(() => undefined);
       if (!filename) {
         currentDocument.value = createEmptyNoteDocument();
         saveState.value = "idle";
@@ -65,7 +67,7 @@ export function useNoteWorkspace(
     noteMarkdown?: unknown;
     noteImages?: unknown;
   }) {
-    void flushPendingSave(currentFile.value);
+    void flushPendingSave(currentFile.value).catch(() => undefined);
     currentDocument.value = normalizeNoteDocument({
       markdown:
         typeof note.noteMarkdown === "string" ? note.noteMarkdown : currentDocument.value.markdown,
@@ -99,34 +101,52 @@ export function useNoteWorkspace(
     saveState.value = "saving";
     window.clearTimeout(saveTimer);
     saveTimer = window.setTimeout(() => {
-      void persistCurrentDocument();
+      saveTimer = 0;
+      void enqueueSave(currentFile.value, currentDocument.value.markdown);
     }, saveDebounceMs);
   }
 
   async function flushPendingSave(sceneName = currentFile.value) {
-    if (!saveTimer) {
-      return;
-    }
+    while (saveTimer || saveQueue.current()) {
+      if (saveTimer) {
+        window.clearTimeout(saveTimer);
+        saveTimer = 0;
+        await enqueueSave(sceneName, currentDocument.value.markdown);
+        continue;
+      }
 
-    window.clearTimeout(saveTimer);
-    saveTimer = 0;
-    await persistCurrentDocument(sceneName);
+      const pendingSave = saveQueue.current();
+      if (pendingSave) {
+        await pendingSave;
+      }
+    }
+  }
+
+  function enqueueSave(sceneName: string, markdown: string) {
+    return saveQueue.enqueue(() => persistDocument(sceneName, markdown));
   }
 
   async function persistCurrentDocument(sceneName = currentFile.value) {
+    await enqueueSave(sceneName, currentDocument.value.markdown);
+  }
+
+  async function persistDocument(sceneName: string, markdown: string) {
     if (!sceneName) {
       saveState.value = "idle";
       return;
     }
 
     try {
-      await saveScriptNote(sceneName, currentDocument.value.markdown);
-      saveState.value = "saved";
+      await saveScriptNote(sceneName, markdown);
+      if (currentFile.value === sceneName) {
+        saveState.value = "saved";
+      }
     } catch (error) {
-      saveState.value = "idle";
+      if (currentFile.value === sceneName) {
+        saveState.value = "idle";
+      }
       onError(getErrorMessage(error));
-    } finally {
-      saveTimer = 0;
+      throw error;
     }
   }
 
@@ -151,7 +171,7 @@ export function useNoteWorkspace(
   const { insertDesignCardReference, removeDesignCardReference } = useNoteDesignCardReferences({
     currentDocument,
     persistImmediately: () => {
-      void flushPendingSave(currentFile.value);
+      void flushPendingSave(currentFile.value).catch(() => undefined);
     },
     updateMarkdown,
   });

@@ -1,11 +1,13 @@
 param(
-    [string]$Version = ""
+    [string]$Version = "",
+    [string]$UpdateManifestURL = ""
 )
 
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $versionFilePath = Join-Path $repoRoot "version.json"
+. (Join-Path $PSScriptRoot "release-version.ps1")
 
 function Resolve-ScreeningZoomExecutablePath {
     param(
@@ -29,25 +31,6 @@ function Resolve-ScreeningZoomExecutablePath {
     throw "Missing screening zoom executable. Expected one of:`n$joined"
 }
 
-function Get-AppVersionFromFile {
-    param(
-        [Parameter(Mandatory = $true)]
-        [string]$Path
-    )
-
-    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-        throw "Missing version file: $Path"
-    }
-
-    $raw = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
-    $value = [string]$raw.appVersion
-    if ([string]::IsNullOrWhiteSpace($value)) {
-        throw "version.json appVersion is empty"
-    }
-
-    return $value.Trim()
-}
-
 function Assert-WorkspaceTemplate {
     param(
         [Parameter(Mandatory = $true)]
@@ -61,7 +44,7 @@ function Assert-WorkspaceTemplate {
         throw "Missing workspace scene manifest: $manifestPath"
     }
 
-    $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+    $manifest = Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
     $sceneNames = @($manifest.scenes)
     if ($sceneNames.Count -eq 0) {
         throw "Workspace scene manifest has no scenes: $manifestPath"
@@ -101,6 +84,12 @@ function Assert-ScriptsCatalog {
         throw "Missing Scripts directory: $ScriptsPath"
     }
 
+    $onboardingWorkspaceName = -join @(
+        [char]0x65B0,
+        [char]0x624B,
+        [char]0x5F15,
+        [char]0x5BFC
+    )
     $workspaceDirectories = @(Get-ChildItem -LiteralPath $ScriptsPath -Directory)
     if ($workspaceDirectories.Count -eq 0) {
         throw "Scripts directory has no workspaces: $ScriptsPath"
@@ -108,7 +97,7 @@ function Assert-ScriptsCatalog {
 
     $hasOnboardingWorkspace = $false
     foreach ($workspaceDirectory in $workspaceDirectories) {
-        $isOnboardingWorkspace = $workspaceDirectory.Name -eq "新手引导"
+        $isOnboardingWorkspace = $workspaceDirectory.Name -eq $onboardingWorkspaceName
         if ($isOnboardingWorkspace) {
             $hasOnboardingWorkspace = $true
         }
@@ -118,26 +107,31 @@ function Assert-ScriptsCatalog {
     }
 
     if (-not $hasOnboardingWorkspace) {
-        throw "Missing onboarding workspace: $(Join-Path $ScriptsPath '新手引导')"
+        throw "Missing onboarding workspace: $(Join-Path $ScriptsPath $onboardingWorkspaceName)"
     }
 }
 
 if ([string]::IsNullOrWhiteSpace($Version)) {
     $Version = Get-AppVersionFromFile -Path $versionFilePath
 }
+$Version = $Version.Trim()
+Assert-AppVersion -Version $Version
 
 $releaseName = "PlotKityCat-v$Version"
 $releaseRoot = Join-Path $repoRoot "build/release/$releaseName"
 $releaseZip = "$releaseRoot.zip"
 $binExe = Join-Path $repoRoot "build/bin/PlotKityCat.exe"
+$buildMetadataPath = Join-Path $repoRoot "build/bin/build-metadata.json"
 $runtimeArchive = Join-Path $repoRoot "resources/runtime/runtime.7z"
 $runtime7ZipDir = Join-Path $repoRoot "tools/7zip/extra/x64"
 $screeningZoomExe = Resolve-ScreeningZoomExecutablePath -RepoRoot $repoRoot
 $scriptsDir = Join-Path $repoRoot "Scripts"
 
-if (-not (Test-Path $binExe)) {
-    throw "Missing built executable: $binExe"
-}
+Assert-BuiltAppVersion `
+    -ExecutablePath $binExe `
+    -MetadataPath $buildMetadataPath `
+    -ExpectedVersion $Version `
+    -ExpectedManifestURL $UpdateManifestURL
 
 if (-not (Test-Path $runtimeArchive)) {
     throw "Missing runtime archive: $runtimeArchive"
