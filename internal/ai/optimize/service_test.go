@@ -29,7 +29,7 @@ func (c *fakeClient) Chat(_ context.Context, _ provider.ChatRequest) (string, er
 }
 
 func newSvc(custom *fakeClient, sub *fakeClient) *Service {
-	return NewService(provider.NewRouter(&fakeChat{}, custom, sub), &fakeLoader{content: "sys"})
+	return NewService(provider.NewRouter(&fakeClient{}, custom, sub), &fakeLoader{content: "sys"})
 }
 
 func TestOptimizeCode_StripsFence(t *testing.T) {

@@ -10,8 +10,10 @@ beforeEach(() => {
 });
 
 function makePopover(): PopoverDOM {
+  const wrapper = document.createElement("div");
+  const closeButton = document.createElement("button");
   const footer = document.createElement("div");
-  return { footer } as unknown as PopoverDOM;
+  return { wrapper, closeButton, footer } as unknown as PopoverDOM;
 }
 
 describe("tourInteractionLock", () => {
@@ -40,6 +42,7 @@ describe("tourInteractionLock", () => {
   it("从锁步推进到最后步: 锁移除 + footer 隐藏", () => {
     const lock = createTourInteractionLock(4);
     const el = document.createElement("aside");
+    document.body.appendChild(el);
     const popover = makePopover();
 
     lock.onPopoverRender(popover, { state: { activeIndex: 3, activeElement: el } });

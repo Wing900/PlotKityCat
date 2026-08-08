@@ -15,7 +15,7 @@ type fakeLoader struct{ content string }
 func (l *fakeLoader) Load(_ string) string { return l.content }
 
 func newSvc(custom *fakeClient, sub *fakeClient) *Service {
-	return NewService(provider.NewRouter(&fakeChat{}, custom, sub), &fakeLoader{content: "sys"})
+	return NewService(provider.NewRouter(&fakeClient{}, custom, sub), &fakeLoader{content: "sys"})
 }
 
 type fakeClient struct {

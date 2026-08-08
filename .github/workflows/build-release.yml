@@ -33,6 +33,13 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm run test:run
+
+      - name: Run Go tests
+        run: go test ./...
+
       - name: Install Wails CLI
         shell: pwsh
         run: |
