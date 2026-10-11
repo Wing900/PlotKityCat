@@ -186,6 +186,9 @@ func readStreamingChatContent(body io.Reader) (string, error) {
 // matches the AI mode (free / custom / subscription). Unknown modes and
 // unlisted status codes fall back to the generic "AI 服务返回失败" form.
 func friendlyError(statusCode int, body, mode string) error {
+	if msg, ok := structuredErrorMessage(body, mode); ok {
+		return fmt.Errorf("%s", msg)
+	}
 	if msg, ok := modeErrorMessage(statusCode, mode); ok {
 		return fmt.Errorf("%s", msg)
 	}
@@ -193,6 +196,50 @@ func friendlyError(statusCode int, body, mode string) error {
 		return fmt.Errorf("AI 服务返回失败：%d", statusCode)
 	}
 	return fmt.Errorf("AI 服务返回失败：%s", body)
+}
+
+func structuredErrorMessage(body, mode string) (string, bool) {
+	if strings.TrimSpace(body) == "" {
+		return "", false
+	}
+	var envelope struct {
+		Error struct {
+			Code string `json:"code"`
+			Type string `json:"type"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal([]byte(body), &envelope); err != nil {
+		return "", false
+	}
+	code := strings.TrimSpace(envelope.Error.Code)
+	if code == "" {
+		code = strings.TrimSpace(envelope.Error.Type)
+	}
+	messages, ok := errorMessagesByModeAndCode[mode]
+	if !ok {
+		return "", false
+	}
+	message, ok := messages[code]
+	return message, ok
+}
+
+var errorMessagesByModeAndCode = map[string]map[string]string{
+	"free": {
+		"insufficient_quota":   "免费额度暂时用完，过段时间再试试。",
+		"model_not_allowed":    "免费模型配置异常，请更新客户端。",
+		"rate_limited":         "请求过于频繁，请稍后再试。",
+		"upstream_auth_error":  "免费服务配置异常，请联系支持。",
+		"upstream_unavailable": "免费服务暂时不可用，请稍后再试。",
+	},
+	"subscription": {
+		"invalid_subscription_token":   "订阅登录状态已失效，请刷新订阅状态。",
+		"insufficient_quota":           "订阅额度已用完，请续费后再试。",
+		"model_not_allowed":            "当前订阅不支持所选模型，请更新客户端或联系支持。",
+		"rate_limited":                 "请求过于频繁，请稍后再试。",
+		"subscription_not_provisioned": "订阅开通尚未完成，请稍后再试或联系支持。",
+		"upstream_auth_error":          "订阅服务配置异常，请联系支持。",
+		"upstream_unavailable":         "订阅服务暂时不可用，请稍后再试。",
+	},
 }
 
 func modeErrorMessage(statusCode int, mode string) (string, bool) {
@@ -206,9 +253,10 @@ func modeErrorMessage(statusCode int, mode string) (string, bool) {
 
 var errorMessagesByMode = map[string]map[int]string{
 	"free": {
-		http.StatusTooManyRequests:  "免费额度暂时用完，过段时间再试试。",
-		http.StatusForbidden:        "免费模型配置异常，请更新客户端。",
-		http.StatusNotFound:         "免费服务暂未开放。",
+		http.StatusPaymentRequired:    "免费额度暂时用完，过段时间再试试。",
+		http.StatusTooManyRequests:    "免费额度暂时用完，过段时间再试试。",
+		http.StatusForbidden:          "免费模型配置异常，请更新客户端。",
+		http.StatusNotFound:           "免费服务暂未开放。",
 		http.StatusServiceUnavailable: "免费服务暂时不可用，请稍后再试。",
 	},
 	"custom": {
@@ -218,8 +266,11 @@ var errorMessagesByMode = map[string]map[int]string{
 		http.StatusServiceUnavailable: "服务暂时不可用，请稍后再试。",
 	},
 	"subscription": {
-		http.StatusTooManyRequests:    "订阅额度暂时用完，请稍后再试。",
-		http.StatusForbidden:          "订阅鉴权失败，请刷新订阅状态。",
+		http.StatusUnauthorized:       "订阅登录状态已失效，请刷新订阅状态。",
+		http.StatusPaymentRequired:    "订阅额度已用完，请续费后再试。",
+		http.StatusTooManyRequests:    "请求过于频繁，请稍后再试。",
+		http.StatusForbidden:          "当前订阅不支持所选模型，请更新客户端或联系支持。",
+		http.StatusBadGateway:         "订阅服务暂时不可用，请稍后再试。",
 		http.StatusNotFound:           "订阅服务地址不存在。",
 		http.StatusServiceUnavailable: "订阅服务暂时不可用，请稍后再试。",
 	},
