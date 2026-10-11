@@ -33,6 +33,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Build embedded frontend assets
+        working-directory: frontend
+        run: npm run build
+
       - name: Run frontend tests
         working-directory: frontend
         run: npm run test:run
