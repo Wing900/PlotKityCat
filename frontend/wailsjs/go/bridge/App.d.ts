@@ -50,6 +50,8 @@ export function GetSubscriptionStatus(arg1:boolean):Promise<bridge.SubscriptionS
 
 export function GetUpdateStatus():Promise<bridge.UpdateStatus>;
 
+export function GetUsageToday():Promise<bridge.UsageToday>;
+
 export function ImportScenePackage():Promise<bridge.ImportSceneResult>;
 
 export function ImportScenePackageFromPath(arg1:string):Promise<bridge.ImportSceneResult>;

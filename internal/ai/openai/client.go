@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"plotkitycat/internal/ai/usage"
 )
 
 const requestTimeout = 5 * time.Minute
@@ -49,7 +51,8 @@ func (c *Client) Generate(ctx context.Context, request Request) (string, error) 
 			{Role: "system", Content: request.SystemPrompt},
 			{Role: "user", Content: buildUserContent(request.UserPrompt, request.Images)},
 		},
-		Stream: true,
+		Stream:        true,
+		StreamOptions: &StreamOptions{IncludeUsage: true},
 	}
 
 	payload, err := json.Marshal(body)
@@ -83,9 +86,12 @@ func (c *Client) Generate(ctx context.Context, request Request) (string, error) 
 		return "", friendlyError(response.StatusCode, message, request.Mode)
 	}
 
-	content, err := readChatContent(response.Body, response.Header.Get("Content-Type"))
+	content, used, err := readChatContent(response.Body, response.Header.Get("Content-Type"))
 	if err != nil {
 		return "", err
+	}
+	if used != nil {
+		usage.Record(request.Mode, *used)
 	}
 	content = strings.TrimSpace(content)
 	if content == "" {
@@ -126,27 +132,30 @@ func completionsURL(baseURL string) string {
 	return trimmed + "/chat/completions"
 }
 
-func readChatContent(body io.Reader, contentType string) (string, error) {
+// readChatContent returns the assistant text plus the server-reported token
+// usage when the response carried one (nil otherwise).
+func readChatContent(body io.Reader, contentType string) (string, *usage.Usage, error) {
 	if strings.Contains(strings.ToLower(contentType), "text/event-stream") {
 		return readStreamingChatContent(body)
 	}
 
 	var result ChatResponse
 	if err := json.NewDecoder(body).Decode(&result); err != nil {
-		return "", err
+		return "", nil, err
 	}
 	if len(result.Choices) == 0 {
-		return "", fmt.Errorf("AI 服务未返回内容")
+		return "", nil, fmt.Errorf("AI 服务未返回内容")
 	}
 
-	return result.Choices[0].Message.Content, nil
+	return result.Choices[0].Message.Content, result.Usage, nil
 }
 
-func readStreamingChatContent(body io.Reader) (string, error) {
+func readStreamingChatContent(body io.Reader) (string, *usage.Usage, error) {
 	scanner := bufio.NewScanner(body)
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 
 	var builder strings.Builder
+	var used *usage.Usage
 	sawChoice := false
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
@@ -164,7 +173,12 @@ func readStreamingChatContent(body io.Reader) (string, error) {
 
 		var chunk ChatStreamResponse
 		if err := json.Unmarshal([]byte(data), &chunk); err != nil {
-			return "", err
+			return "", nil, err
+		}
+		// With stream_options.include_usage the server appends a final chunk
+		// that has no choices but carries the usage; keep the last one seen.
+		if chunk.Usage != nil {
+			used = chunk.Usage
 		}
 		for _, choice := range chunk.Choices {
 			sawChoice = true
@@ -173,13 +187,13 @@ func readStreamingChatContent(body io.Reader) (string, error) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return "", err
+		return "", nil, err
 	}
 	if !sawChoice {
-		return "", fmt.Errorf("AI 服务未返回内容")
+		return "", nil, fmt.Errorf("AI 服务未返回内容")
 	}
 
-	return builder.String(), nil
+	return builder.String(), used, nil
 }
 
 // friendlyError maps an upstream HTTP failure to a user-facing message that

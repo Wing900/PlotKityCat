@@ -3,13 +3,16 @@ import type {
   AIProviderSettings,
   AISubscriptionStatus,
   AIServiceMode,
+  AIUsageToday,
 } from "../features/ai/services/aiTypes";
 import { openSponsorPage, SPONSOR_URL } from "../../lib/help";
+import { formatTokenCount } from "../../features/plot/model/workspace/usageTodayHelpers";
 
 const props = defineProps<{
   open: boolean;
   settings: AIProviderSettings;
   subscriptionStatus: AISubscriptionStatus;
+  usageToday: AIUsageToday;
 }>();
 
 const emit = defineEmits<{
@@ -146,6 +149,12 @@ function updateField(field: "url" | "key" | "model", value: string) {
             </span>
           </div>
         </div>
+
+        <p class="ai-usage-today">
+          今日本软件已用 {{ formatTokenCount(usageToday.totalTokens) }} tokens
+          <span class="ai-inline-divider" aria-hidden="true">|</span>
+          {{ usageToday.requests }} 次请求
+        </p>
 
         <div class="create-dialog-actions">
           <button class="dialog-button secondary" type="button" @click="emit('close')">

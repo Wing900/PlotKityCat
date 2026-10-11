@@ -126,6 +126,14 @@ export type AISubscriptionStatus = {
   baseUrl: string;
 };
 
+export type AIUsageToday = {
+  date: string;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  requests: number;
+};
+
 export type AppUpdateStatus = {
   currentVersion: string;
   latestVersion: string;

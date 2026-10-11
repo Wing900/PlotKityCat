@@ -18,6 +18,7 @@ import { usePackageTransfer } from "../usePackageTransfer";
 import { usePkcDropImport } from "../usePkcDropImport";
 import { useWorkspaceLifecycle } from "../useWorkspaceLifecycle";
 import { useWorkspaceSubscription } from "./useWorkspaceSubscription";
+import { useWorkspaceUsage } from "./useWorkspaceUsage";
 import { useWorkspaceUpdates } from "./useWorkspaceUpdates";
 import { useWorkspaceScriptOps } from "./useWorkspaceScriptOps";
 import { useWorkspaceAISettings } from "./useWorkspaceAISettings";
@@ -38,10 +39,12 @@ export function usePlotWorkspace() {
   const subscription = useWorkspaceSubscription({
     openRunErrorDialog: runErrorDialog.openRunErrorDialog,
   });
+  const usageTracker = useWorkspaceUsage();
   const aiSettingsStore = useWorkspaceAISettings({
     openRunErrorDialog: runErrorDialog.openRunErrorDialog,
     onOpen: () => {
       void subscription.refreshSubscriptionStatus(true);
+      void usageTracker.refreshUsageToday();
     },
   });
 
@@ -323,6 +326,7 @@ export function usePlotWorkspace() {
     stopCurrentRun: lifecycle.stopCurrentRun,
     stopScreening: screeningWorkspace.stopScreening,
     subscriptionStatus: subscription.subscriptionStatus,
+    usageToday: usageTracker.usageToday,
     showSplitPane: paneLayout.showSplitPane,
     workspaceLayoutMode: paneLayout.workspaceLayoutMode,
     toggleCodePane: paneLayout.toggleCodePane,

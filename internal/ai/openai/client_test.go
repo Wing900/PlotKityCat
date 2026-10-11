@@ -13,7 +13,7 @@ func TestReadChatContentFromStreamingResponse(t *testing.T) {
 		"",
 	}, "\n\n"))
 
-	content, err := readChatContent(body, "text/event-stream; charset=utf-8")
+	content, _, err := readChatContent(body, "text/event-stream; charset=utf-8")
 	if err != nil {
 		t.Fatalf("readChatContent returned error: %v", err)
 	}
@@ -25,7 +25,7 @@ func TestReadChatContentFromStreamingResponse(t *testing.T) {
 func TestReadChatContentFromJSONResponse(t *testing.T) {
 	body := strings.NewReader(`{"choices":[{"message":{"content":"print(\"ok\")"}}]}`)
 
-	content, err := readChatContent(body, "application/json")
+	content, _, err := readChatContent(body, "application/json")
 	if err != nil {
 		t.Fatalf("readChatContent returned error: %v", err)
 	}

@@ -337,6 +337,7 @@ onBeforeUnmount(() => {
       :open="workspace.isAISettingsDialogOpen"
       :settings="workspace.aiSettings"
       :subscription-status="workspace.subscriptionStatus"
+      :usage-today="workspace.usageToday"
       @close="workspace.closeAISettings"
       @purchase-subscription="workspace.purchaseSubscription"
       @refresh-subscription="workspace.refreshSubscriptionStatusManually"

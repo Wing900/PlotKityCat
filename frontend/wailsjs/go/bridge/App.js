@@ -98,6 +98,10 @@ export function GetUpdateStatus() {
   return window['go']['bridge']['App']['GetUpdateStatus']();
 }
 
+export function GetUsageToday() {
+  return window['go']['bridge']['App']['GetUsageToday']();
+}
+
 export function ImportScenePackage() {
   return window['go']['bridge']['App']['ImportScenePackage']();
 }

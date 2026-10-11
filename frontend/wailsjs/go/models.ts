@@ -878,6 +878,26 @@ export namespace bridge {
 	        this.readyToInstall = source["readyToInstall"];
 	    }
 	}
+	export class UsageToday {
+	    date: string;
+	    promptTokens: number;
+	    completionTokens: number;
+	    totalTokens: number;
+	    requests: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new UsageToday(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.date = source["date"];
+	        this.promptTokens = source["promptTokens"];
+	        this.completionTokens = source["completionTokens"];
+	        this.totalTokens = source["totalTokens"];
+	        this.requests = source["requests"];
+	    }
+	}
 	
 	export class WorkspacePackageTransferResult {
 	    path: string;

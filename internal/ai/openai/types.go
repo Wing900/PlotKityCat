@@ -1,5 +1,7 @@
 package openai
 
+import "plotkitycat/internal/ai/usage"
+
 type Message struct {
 	Role    string `json:"role"`
 	Content any    `json:"content"`
@@ -16,9 +18,16 @@ type ImageURL struct {
 }
 
 type ChatRequest struct {
-	Model    string    `json:"model"`
-	Messages []Message `json:"messages"`
-	Stream   bool      `json:"stream"`
+	Model         string         `json:"model"`
+	Messages      []Message      `json:"messages"`
+	Stream        bool           `json:"stream"`
+	StreamOptions *StreamOptions `json:"stream_options,omitempty"`
+}
+
+// StreamOptions mirrors the OpenAI streaming options. IncludeUsage asks the
+// server to append a final chunk that carries token usage.
+type StreamOptions struct {
+	IncludeUsage bool `json:"include_usage"`
 }
 
 type ChatResponse struct {
@@ -27,6 +36,7 @@ type ChatResponse struct {
 			Content string `json:"content"`
 		} `json:"message"`
 	} `json:"choices"`
+	Usage *usage.Usage `json:"usage,omitempty"`
 }
 
 type ChatStreamResponse struct {
@@ -38,4 +48,5 @@ type ChatStreamResponse struct {
 			Content string `json:"content"`
 		} `json:"message"`
 	} `json:"choices"`
+	Usage *usage.Usage `json:"usage,omitempty"`
 }

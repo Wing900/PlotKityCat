@@ -511,3 +511,10 @@
     margin-top: 30px;
   }
 }
+
+.ai-usage-today {
+  margin: 0.4rem 0 0;
+  color: color-mix(in srgb, var(--text), transparent 35%);
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+}

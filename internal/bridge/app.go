@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"plotkitycat/internal/ai"
+	"plotkitycat/internal/ai/usage"
 	"plotkitycat/internal/aicode/workflow"
 	"plotkitycat/internal/appstate"
 	"plotkitycat/internal/codeversions"
@@ -42,6 +43,7 @@ type App struct {
 	aiSettingsStore      *settingspkg.AIStore
 	subscriptionService  *subscription.Service
 	updateService        *updater.Service
+	usageStore           *usage.Store
 	workspaceManager     *workspaces.Manager
 }
 
@@ -52,6 +54,7 @@ func NewApp() *App {
 	fileStore := filestore.NewStore(workspaceManager)
 	designCardStore := designcards.NewStore(fileStore)
 	screeningZoomService := screeningzoom.NewService()
+	usageStore := newUsageStore()
 	app := &App{
 		aiService:            ai.NewService(subscriptionService),
 		appStateStore:        appstate.NewStore(),
@@ -65,6 +68,7 @@ func NewApp() *App {
 		aiSettingsStore:      settingspkg.NewAIStore(),
 		subscriptionService:  subscriptionService,
 		updateService:        updater.NewService(),
+		usageStore:           usageStore,
 		workspaceManager:     workspaceManager,
 	}
 	app.screeningService = screening.NewService(workspaceManager, app.runner, screening.Callbacks{
@@ -97,6 +101,11 @@ func NewApp() *App {
 			app.emit(EventScreeningState, mapScreeningState(state))
 		},
 	})
+
+	usageStore.SetOnChange(func(snapshot usage.Snapshot) {
+		app.emit(EventUsageUpdated, mapUsageToday(snapshot))
+	})
+	usage.SetRecorder(usageStore)
 
 	app.aiWorkflow = newAIWorkflowService(app)
 	app.designCardSession = newDesignCardSessionService(app)

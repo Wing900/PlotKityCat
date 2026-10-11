@@ -301,3 +301,12 @@ type UpdateStatus struct {
 	Downloaded      bool   `json:"downloaded"`
 	ReadyToInstall  bool   `json:"readyToInstall"`
 }
+
+// UsageToday is the token usage this app recorded for the current local day.
+type UsageToday struct {
+	Date             string `json:"date"`
+	PromptTokens     int    `json:"promptTokens"`
+	CompletionTokens int    `json:"completionTokens"`
+	TotalTokens      int    `json:"totalTokens"`
+	Requests         int    `json:"requests"`
+}

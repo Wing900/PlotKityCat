@@ -12,6 +12,7 @@ const (
 	EventRunFinished           = "run:finished"
 	EventRunStopped            = "run:stopped"
 	EventRunFailed             = "run:failed"
+	EventUsageUpdated          = "usage:updated"
 	EventAIWorkflowStarted     = "ai:workflow_started"
 	EventAIWorkflowState       = "ai:workflow_state_changed"
 	EventAIWorkflowApplied     = "ai:workflow_code_applied"
