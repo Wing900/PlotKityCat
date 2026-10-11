@@ -154,6 +154,14 @@ jobs:
         shell: pwsh
         run: .\tools\package-release.ps1 -Version "${{ steps.version.outputs.app_version }}"
 
+      - name: Install NSIS compiler
+        shell: pwsh
+        run: choco install nsis --no-progress -y
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: .\tools\build-installer.ps1 -Version "${{ steps.version.outputs.app_version }}"
+
       - name: Upload app binary
         uses: actions/upload-artifact@v4
         with:
@@ -175,14 +183,29 @@ jobs:
           path: build/release/PlotKityCat-v${{ steps.version.outputs.app_version }}.zip
           if-no-files-found: error
 
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: PlotKityCat-installer-${{ steps.version.outputs.app_version }}
+          path: |
+            build/release/PlotKityCat-Setup-${{ steps.version.outputs.app_version }}-windows-amd64.exe
+            build/release/PlotKityCat-Setup-${{ steps.version.outputs.app_version }}-windows-amd64.exe.json
+          if-no-files-found: error
+
       - name: Publish GitHub release
+        if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.app_version }}
           name: v${{ steps.version.outputs.app_version }}
-          generate_release_notes: true
+          body: |
+            新增 Windows 安装包，安装后自动创建桌面快捷方式。
+            支持导入旧版作品与配置，卸载保留用户数据。
+            Windows 10/11 x64 用户下载 Setup.exe 安装即可。
           fail_on_unmatched_files: true
           files: |
+            build/release/PlotKityCat-Setup-${{ steps.version.outputs.app_version }}-windows-amd64.exe
+            build/release/PlotKityCat-Setup-${{ steps.version.outputs.app_version }}-windows-amd64.exe.json
             build/release/PlotKityCat-v${{ steps.version.outputs.app_version }}.zip
             build/update/${{ steps.version.outputs.app_version }}/PlotKityCat-${{ steps.version.outputs.app_version }}-windows-amd64.exe
             build/update/${{ steps.version.outputs.app_version }}/manifest.json

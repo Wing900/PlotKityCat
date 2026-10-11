@@ -1,6 +1,8 @@
 param(
     [string]$Version = "",
-    [string]$UpdateManifestURL = ""
+    [string]$UpdateManifestURL = "",
+    [ValidateSet("Portable", "Installed")]
+    [string]$Layout = "Portable"
 )
 
 $ErrorActionPreference = "Stop"
@@ -118,6 +120,9 @@ $Version = $Version.Trim()
 Assert-AppVersion -Version $Version
 
 $releaseName = "PlotKityCat-v$Version"
+if ($Layout -eq "Installed") {
+    $releaseName = "PlotKityCat-v$Version-installer-payload"
+}
 $releaseRoot = Join-Path $repoRoot "build/release/$releaseName"
 $releaseZip = "$releaseRoot.zip"
 $binExe = Join-Path $repoRoot "build/bin/PlotKityCat.exe"
@@ -133,6 +138,13 @@ Assert-BuiltAppVersion `
     -ExpectedVersion $Version `
     -ExpectedManifestURL $UpdateManifestURL
 
+if ($Layout -eq "Installed") {
+    $metadata = Get-Content -LiteralPath $buildMetadataPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($metadata.installedLayoutVersion -ne 1) {
+        throw "This executable predates installed data layout support. Rebuild with build-versioned-app.ps1 first."
+    }
+}
+
 if (-not (Test-Path $runtimeArchive)) {
     throw "Missing runtime archive: $runtimeArchive"
 }
@@ -147,6 +159,12 @@ if (-not (Test-Path (Join-Path $runtime7ZipDir "7za.dll"))) {
 
 Assert-ScriptsCatalog -ScriptsPath $scriptsDir
 
+# Recursive cleanup is limited to the named artifact under build/release.
+$allowedReleaseRoot = [IO.Path]::GetFullPath((Join-Path $repoRoot "build/release"))
+$resolvedReleaseRoot = [IO.Path]::GetFullPath($releaseRoot)
+if (-not $resolvedReleaseRoot.StartsWith($allowedReleaseRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Release output escaped build/release: $resolvedReleaseRoot"
+}
 if (Test-Path $releaseRoot) {
     Remove-Item -LiteralPath $releaseRoot -Recurse -Force
 }
@@ -165,11 +183,22 @@ Copy-Item -LiteralPath (Join-Path $runtime7ZipDir "7za.dll") -Destination (Join-
 New-Item -ItemType Directory -Path (Join-Path $releaseRoot "resources/screeningzoom") -Force | Out-Null
 Copy-Item -LiteralPath $screeningZoomExe -Destination (Join-Path $releaseRoot "resources/screeningzoom/zoomit.exe") -Force
 
-Copy-Item -LiteralPath $scriptsDir -Destination (Join-Path $releaseRoot "Scripts") -Recurse -Force
-Assert-ScriptsCatalog -ScriptsPath (Join-Path $releaseRoot "Scripts")
+$packagedScripts = Join-Path $releaseRoot "Scripts"
+if ($Layout -eq "Installed") {
+    $templateRoot = Join-Path $releaseRoot "resources/templates"
+    New-Item -ItemType Directory -Path $templateRoot -Force | Out-Null
+    $packagedScripts = Join-Path $templateRoot "Scripts"
+    [IO.File]::WriteAllText((Join-Path $releaseRoot ".plotkitycat-installed"), "1", [Text.Encoding]::ASCII)
+}
+Copy-Item -LiteralPath $scriptsDir -Destination $packagedScripts -Recurse -Force
+Assert-ScriptsCatalog -ScriptsPath $packagedScripts
 
-Compress-Archive -LiteralPath $releaseRoot -DestinationPath $releaseZip -CompressionLevel Optimal
+if ($Layout -eq "Portable") {
+    Compress-Archive -LiteralPath $releaseRoot -DestinationPath $releaseZip -CompressionLevel Optimal
+}
 
 Write-Host "Packaged release:"
 Write-Host "  Directory: $releaseRoot"
-Write-Host "  Zip:       $releaseZip"
+if ($Layout -eq "Portable") {
+    Write-Host "  Zip:       $releaseZip"
+}

@@ -12,7 +12,7 @@ func AppRoot() (string, error) {
 	}
 
 	exeDir := filepath.Dir(exePath)
-	if isProjectRoot(exeDir) || isRuntimeRoot(exeDir) {
+	if fileExists(filepath.Join(exeDir, InstalledMarker)) || isProjectRoot(exeDir) || isRuntimeRoot(exeDir) {
 		return exeDir, nil
 	}
 
@@ -25,7 +25,7 @@ func AppRoot() (string, error) {
 }
 
 func ScriptsDir() (string, error) {
-	root, err := AppRoot()
+	root, err := DataRoot()
 	if err != nil {
 		return "", err
 	}
@@ -34,7 +34,7 @@ func ScriptsDir() (string, error) {
 }
 
 func ConfigDir() (string, error) {
-	root, err := AppRoot()
+	root, err := DataRoot()
 	if err != nil {
 		return "", err
 	}
@@ -88,7 +88,7 @@ func UpdateStatePath() (string, error) {
 }
 
 func RuntimeDir() (string, error) {
-	root, err := AppRoot()
+	root, err := DataRoot()
 	if err != nil {
 		return "", err
 	}
@@ -120,7 +120,7 @@ func RuntimeExtractorPath() (string, error) {
 }
 
 func RuntimeTempDir() (string, error) {
-	root, err := AppRoot()
+	root, err := DataRoot()
 	if err != nil {
 		return "", err
 	}

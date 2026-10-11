@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"plotkitycat/internal/bridge"
+	"plotkitycat/internal/installeddata"
 	"plotkitycat/internal/instancelock"
 	"plotkitycat/internal/startupdiag"
 	"plotkitycat/internal/windowmetrics"
@@ -34,6 +35,11 @@ func main() {
 		panic(startErr)
 	}
 	defer lock.Release()
+
+	if err := installeddata.Initialize(); err != nil {
+		startupdiag.ShowStartupError("PlotKityCat Data Initialization Error", startupdiag.StartupErrorMessage(err))
+		return
+	}
 
 	app := bridge.NewApp()
 	initialWindowSize := windowmetrics.InitialWindowSize()

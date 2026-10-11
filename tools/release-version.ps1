@@ -45,6 +45,7 @@ function Write-BuiltAppVersionMetadata {
     Assert-AppVersion -Version $Version
     $metadata = [ordered]@{
         appVersion = $Version
+        installedLayoutVersion = 1
         updateManifestURL = $UpdateManifestURL.Trim()
         builtAt = [DateTime]::UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ")
     }
