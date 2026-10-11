@@ -1,6 +1,7 @@
 param(
     [string]$Version = "",
-    [string]$UpdateManifestURL = "https://update.5051001.xyz/plotkitycat/stable/manifest.json"
+    [string]$UpdateManifestURL = "https://update.5051001.xyz/plotkitycat/stable/manifest.json",
+    [switch]$SkipBindings
 )
 
 $ErrorActionPreference = "Stop"
@@ -31,7 +32,11 @@ $ldflags = (
 )
 
 Write-Host "Building PlotKityCat with version $Version and update channel $UpdateManifestURL"
-wails build -clean -ldflags $ldflags
+$buildArgs = @("build", "-clean", "-ldflags", $ldflags)
+if ($SkipBindings) {
+    $buildArgs += "-skipbindings"
+}
+& wails @buildArgs
 if ($LASTEXITCODE -ne 0) {
     throw "Wails build failed with exit code $LASTEXITCODE"
 }

@@ -34,6 +34,29 @@ func (c *Client) Activate(ctx context.Context, request ActivationRequest) (Activ
 		return ActivationResponse{}, err
 	}
 
+	var lastErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		result, err := c.activateOnce(ctx, url, payload)
+		if err == nil {
+			return result, nil
+		}
+		lastErr = err
+		if ctx.Err() != nil || attempt == 2 {
+			break
+		}
+		delay := time.Duration(attempt+1) * 300 * time.Millisecond
+		timer := time.NewTimer(delay)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return ActivationResponse{}, ctx.Err()
+		case <-timer.C:
+		}
+	}
+	return ActivationResponse{}, lastErr
+}
+
+func (c *Client) activateOnce(ctx context.Context, url string, payload []byte) (ActivationResponse, error) {
 	httpRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
 	if err != nil {
 		return ActivationResponse{}, err

@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"plotkitycat/internal/version"
 )
 
 type DeviceIDProvider interface {
@@ -128,9 +130,15 @@ func (s *Service) resolveState(ctx context.Context, force bool) (CacheState, err
 	response, err := s.client.Activate(ctx, ActivationRequest{
 		DeviceID:   state.DeviceID,
 		InstallID:  state.InstallID,
-		AppVersion: "portable",
+		AppVersion: version.Current(),
 	})
 	if err != nil {
+		if hasUsableToken(state) {
+			state.Status = StatusActive
+			state.Message = "订阅状态刷新失败，正在使用有效缓存：" + err.Error()
+			_ = s.store.Save(state)
+			return state, nil
+		}
 		if state.Status != "" {
 			state.Message = err.Error()
 			state.Status = StatusError
@@ -159,6 +167,14 @@ func (s *Service) resolveState(ctx context.Context, force bool) (CacheState, err
 	}
 
 	return state, nil
+}
+
+func hasUsableToken(state CacheState) bool {
+	if strings.TrimSpace(state.Token) == "" {
+		return false
+	}
+	expireAt, err := time.Parse(time.RFC3339, state.ExpireAt)
+	return err == nil && time.Until(expireAt) > 0
 }
 
 func (s *Service) resolveDeviceID(state *CacheState) (string, bool, error) {
