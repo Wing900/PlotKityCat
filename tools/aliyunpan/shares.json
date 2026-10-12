@@ -1,0 +1,26 @@
+[
+  {
+    "name": "PlotKityCat-mac-single",
+    "label": "Mac 单 app",
+    "key": "mac-single",
+    "url": "https://bj37773.apps.aliyunfile.com/disk/s/9d3BcCsMbG9?pwd=047217&domainId=bj37773"
+  },
+  {
+    "name": "PlotKityCat-mac-full",
+    "label": "Mac 完整版",
+    "key": "mac-full",
+    "url": "https://bj37773.apps.aliyunfile.com/disk/s/8KeUAE7yTfM?pwd=584093&domainId=bj37773"
+  },
+  {
+    "name": "PlotKityCat-0.0.5.0-windows-amd64",
+    "label": "Win 单 exe",
+    "key": "win-single",
+    "url": "https://bj37773.apps.aliyunfile.com/disk/s/yg88fRmqYrA?pwd=661707&domainId=bj37773"
+  },
+  {
+    "name": "PlotKityCat-v0.0.5.0",
+    "label": "Win 完整版",
+    "key": "win-full",
+    "url": "https://bj37773.apps.aliyunfile.com/disk/s/oRnH1MYKiAS?pwd=345134&domainId=bj37773"
+  }
+]
