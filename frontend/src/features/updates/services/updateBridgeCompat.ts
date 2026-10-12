@@ -15,7 +15,12 @@ type BridgeAppCompat = {
   CheckForUpdates?: (force: boolean) => Promise<UpdateStatusLike>;
   DownloadUpdate?: () => Promise<UpdateStatusLike>;
   InstallUpdateAndRestart?: () => Promise<void>;
+  ReportUpgradeReady?: () => Promise<void>;
 };
+
+export async function reportUpgradeReady(): Promise<void> {
+  await getBridgeApp().ReportUpgradeReady?.();
+}
 
 export async function getUpdateStatus(): Promise<UpdateStatusLike> {
   const bridgeApp = getBridgeApp();

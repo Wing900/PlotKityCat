@@ -88,6 +88,8 @@ export function RenameWorkspace(arg1:string,arg2:string):Promise<bridge.Workspac
 
 export function ReorderScripts(arg1:Array<string>,arg2:string):Promise<bridge.WorkspaceSnapshot>;
 
+export function ReportUpgradeReady():Promise<void>;
+
 export function ResolveOnboardingState(arg1:string,arg2:boolean):Promise<bridge.OnboardingState>;
 
 export function SaveAISettings(arg1:bridge.AIProviderSettings):Promise<bridge.AIProviderSettings>;

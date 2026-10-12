@@ -1,14 +1,21 @@
 {
-  "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "PlotKityCat",
-  "outputfilename": "PlotKityCat",
-  "frontend:install": "npm install",
-  "frontend:build": "npm run build",
-  "frontend:dev:watcher": "npm run dev",
-  "frontend:dev:serverUrl": "auto",
-  "frontenddir": "frontend",
-  "author": {
-    "name": "Wingflow",
-    "email": ""
-  }
+    "$schema":  "https://wails.io/schemas/config.v2.json",
+    "name":  "PlotKityCat",
+    "outputfilename":  "PlotKityCat",
+    "frontend:install":  "npm install",
+    "frontend:build":  "npm run build",
+    "frontend:dev:watcher":  "npm run dev",
+    "frontend:dev:serverUrl":  "auto",
+    "frontenddir":  "frontend",
+    "author":  {
+                   "name":  "Wingflow",
+                   "email":  ""
+               },
+    "info":  {
+                 "companyName":  "Wingflow",
+                 "productName":  "PlotKityCat",
+                 "productVersion":  "0.0.5.5",
+                 "copyright":  "Wingflow",
+                 "comments":  ""
+             }
 }

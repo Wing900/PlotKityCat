@@ -3,6 +3,8 @@ import { EventsOn } from "../../../../wailsjs/runtime/runtime";
 import type { RuntimeStatusLike } from "../../runtime/services/runtimeBridgeCompat";
 import type { WorkspaceSnapshotLike } from "../../scripts/services/scriptBridgeCompat";
 import { getErrorMessage } from "../../../lib/errors";
+import { reportUpgradeReady } from "../../updates/services/updateBridgeCompat";
+import { nextTick } from "vue";
 
 type RuntimeState = {
   applyEnvironmentStatus: (status?: RuntimeStatusLike) => void;
@@ -59,6 +61,8 @@ export function useWorkspaceLifecycle(options: WorkspaceLifecycleOptions) {
       options.noteWorkspace.hydrateFromScriptDocument(snapshot.workspace?.document ?? {});
       await options.scriptWorkspace.restoreLastSelection();
       options.runtime.finishInitialization("Runtime ready");
+      await nextTick();
+      await reportUpgradeReady();
       // Subscription 属于非关键远程状态；后台刷新，避免网络超时阻塞首屏与 Onboarding。
       void options.refreshSubscriptionStatus(false);
     } catch (error) {

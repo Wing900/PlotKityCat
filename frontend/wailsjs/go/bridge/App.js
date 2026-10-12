@@ -174,6 +174,10 @@ export function ReorderScripts(arg1, arg2) {
   return window['go']['bridge']['App']['ReorderScripts'](arg1, arg2);
 }
 
+export function ReportUpgradeReady() {
+  return window['go']['bridge']['App']['ReportUpgradeReady']();
+}
+
 export function ResolveOnboardingState(arg1, arg2) {
   return window['go']['bridge']['App']['ResolveOnboardingState'](arg1, arg2);
 }
