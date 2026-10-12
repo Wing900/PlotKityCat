@@ -39,7 +39,10 @@ function Compare-Version($left,$right) {
 function Save-Journal($journal) {
   $json = $journal | ConvertTo-Json -Depth 8 -Compress
   [IO.File]::WriteAllText($journalPath+'.tmp', $json, [Text.UTF8Encoding]::new($false))
-  if (Test-Path -LiteralPath $journalPath) { [IO.File]::Replace($journalPath+'.tmp',$journalPath,$null) }
+  # Windows PowerShell 5.1 binds $null to a [string] parameter as an EMPTY
+  # string, and File.Replace rejects "" as an illegal path. [NullString]::Value
+  # is the only form that reaches the API as a real null.
+  if (Test-Path -LiteralPath $journalPath) { [IO.File]::Replace($journalPath+'.tmp',$journalPath,[NullString]::Value) }
   else { [IO.File]::Move($journalPath+'.tmp',$journalPath) }
 }
 function Restore-Journal($journal) {
@@ -56,7 +59,7 @@ function Restore-Journal($journal) {
     Assert-NoLinks $backup
     if (Test-Path -LiteralPath $backup) {
       if ((Test-Path -LiteralPath $backup -PathType Leaf) -and (Test-Path -LiteralPath $live -PathType Leaf)) {
-        [IO.File]::Replace($backup,$live,$null)
+        [IO.File]::Replace($backup,$live,[NullString]::Value)
       } else {
         if (Test-Path -LiteralPath $live) { Remove-Item -LiteralPath $live -Recurse -Force }
         Move-Item -LiteralPath $backup -Destination $live
