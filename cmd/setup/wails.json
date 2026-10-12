@@ -1,0 +1,16 @@
+{
+    "$schema":  "https://wails.io/schemas/config.v2.json",
+    "name":  "PlotKityCatSetup",
+    "outputfilename":  "PlotKityCatSetup",
+    "frontend:dir":  "ui",
+    "author":  {
+                   "name":  "Wingflow",
+                   "email":  ""
+               },
+    "info":  {
+                 "companyName":  "Wingflow",
+                 "productName":  "PlotKityCat 安装",
+                 "productVersion":  "0.0.5.5",
+                 "comments":  "PlotKityCat Windows installer"
+             }
+}

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PlotKityCat 安装</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #fff;
+      --surface: #f8f8f6;
+      --ink: #2c2c2c;
+      --soft: #62615d;
+      --muted: #9c9a94;
+      --pill: 999px;
+      font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #f0f1ef;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible {
+      outline: 3px solid rgba(44,44,42,.16);
+      outline-offset: 4px;
+    }
+    .preview { width: min(620px, calc(100vw - 32px)); padding: 30px 0; }
+    .window {
+      overflow: hidden;
+      min-height: 490px;
+      background: var(--paper);
+      border-radius: 12px;
+      box-shadow: 0 24px 64px rgba(52,44,30,.10), 0 2px 8px rgba(52,44,30,.035);
+    }
+    .titlebar {
+      height: 50px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 0 16px 0 24px;
+    }
+    .window-actions { display: flex; gap: 4px; }
+    .window-actions button {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      background: transparent;
+      border: 0;
+      border-radius: var(--pill);
+      color: var(--muted);
+    }
+    .window-actions button:hover { background: var(--surface); color: var(--ink); }
+    .window-actions svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.3; }
+    main { padding: 24px 52px 56px; text-align: center; }
+    .logo { display: block; width: 132px; height: 132px; margin: 0 auto 20px; border-radius: 16px; }
+    h1 { margin: 0; font-size: 28px; line-height: 1.3; letter-spacing: -.7px; font-weight: 600; }
+    .description { margin: 12px 0 30px; font-size: 13px; line-height: 1.6; color: var(--soft); }
+    .primary {
+      display: block;
+      width: 224px;
+      height: 46px;
+      margin: 0 auto;
+      border: 0;
+      border-radius: 10px;
+      background: var(--ink);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      transition: background 150ms, transform 150ms;
+    }
+    .primary:hover { background: #444440; }
+    .primary:active { transform: scale(.98); }
+    .primary:disabled { cursor: default; background: #e9e7e2; color: var(--soft); }
+    .options { margin: 18px auto 0; width: min(390px, 100%); font-size: 12px; color: var(--soft); }
+    .options-toggle { display: inline-flex; align-items: center; gap: 7px; border: 0; padding: 4px 8px; background: transparent; color: var(--muted); font-size: 12px; border-radius: 6px; }
+    .options-toggle:hover { color: var(--soft); }
+    .options-toggle svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 1.3; transition: transform 260ms cubic-bezier(.3,.9,.4,1); }
+    .options-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+    .options-panel { display: grid; grid-template-rows: 0fr; opacity: 0; transform: translateY(-4px); transition: grid-template-rows 260ms cubic-bezier(.3,.9,.4,1), opacity 200ms, transform 260ms; }
+    .options-panel.open { grid-template-rows: 1fr; opacity: 1; transform: translateY(0); }
+    .options-inner { min-height: 0; overflow: hidden; }
+    .option-body { padding: 6px 0 0; margin-top: 12px; text-align: left; }
+    .setting-row { min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .setting-row + .setting-row { border-top: 1px solid #f1f1ee; }
+    .setting-name { flex-shrink: 0; color: var(--soft); font-size: 12px; }
+    .choose-folder { border: 0; border-radius: 7px; padding: 7px 11px; background: var(--surface); color: var(--soft); font-size: 11px; white-space: nowrap; transition: background 150ms; }
+    .choose-folder:hover { background: #efefeb; }
+    .location-control { min-width: 0; display: flex; align-items: center; gap: 6px; flex: 1; }
+    .location-input { width: 100%; min-width: 0; border: 0; border-radius: 7px; background: var(--surface); padding: 7px 9px; color: var(--soft); font-size: 11px; }
+    .import-status { margin: 0 0 12px; font-size: 11px; color: #69785c; overflow-wrap: anywhere; line-height: 1.7; }
+    .import-help { margin-left: 6px; font-size: 11px; color: var(--muted); }
+    .import-status.error { color: #a56353; }
+    .import-selected { display: flex; align-items: flex-start; gap: 8px; }
+    .import-selected p { flex: 1; }
+    .clear-folder { border: 0; background: transparent; color: var(--muted); padding: 2px; font-size: 11px; }
+    .progress { width: 224px; height: 46px; margin: 0 auto; padding-top: 7px; }
+    .track { height: 3px; margin-top: 12px; border-radius: var(--pill); background: #eeede9; overflow: hidden; }
+    .fill { height: 100%; width: 0; border-radius: inherit; background: #929f83; transition: width 180ms linear; }
+    .progress-label { display: flex; justify-content: space-between; color: var(--soft); font-size: 12px; }
+    #percentage { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+    [hidden] { display: none !important; }
+    @media (max-width: 480px) {
+      main { padding: 24px 24px 20px; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+      body { min-height: 100vh; background: white; display: block; }
+    .preview { width: 100%; padding: 0; }
+    .window { min-height: 100vh; box-shadow: none; }
+    .titlebar { --wails-draggable: drag; }
+    button, input { --wails-draggable: no-drag; }
+    .track.indeterminate .fill { width: 32% !important; animation: glide 1.4s ease-in-out infinite; }
+    @keyframes glide { from { transform: translateX(-110%); } to { transform: translateX(330%); } }
+    @media (prefers-reduced-motion: reduce) { .track.indeterminate .fill { animation: none; transform: translateX(100%); } }
+  </style>
+</head>
+<body>
+  <div class="preview">
+    <section class="window" aria-label="PlotKityCat 安装窗口">
+      <header class="titlebar">
+        <div class="window-actions">
+          <button type="button" aria-label="最小化" title="最小化" id="reset">
+            <svg viewBox="0 0 16 16"><path d="M3 8h10"/></svg>
+          </button>
+          <button type="button" aria-label="关闭" title="关闭" id="close">
+            <svg viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></svg>
+          </button>
+        </div>
+      </header>
+      <main>
+        <img class="logo" src="logo.png" alt="PlotKityCat 猫咪 Logo" width="132" height="132">
+        <h1 id="heading">PlotKityCat</h1>
+        <p class="description" id="description" aria-live="polite">安装完成后，即可从桌面打开。</p>
+        <div class="progress" id="progress" hidden>
+          <div class="progress-label"><span id="progress-message">正在安装</span><span id="percentage">0%</span></div>
+          <div class="track" role="progressbar" aria-label="安装进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="track"><div class="fill" id="fill"></div></div>
+        </div>
+        <button class="primary" type="button" id="install">安装</button>
+        <div class="options" id="options">
+          <button class="options-toggle" id="toggle-options" type="button" aria-expanded="false" aria-controls="options-panel">安装选项<svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4.5 3 3 3-3"/></svg></button>
+          <div class="options-panel" id="options-panel" inert><div class="options-inner"><div class="option-body">
+            <div class="setting-row" id="legacy-row">
+              <span class="setting-name" id="import-label">导入旧版数据<span class="import-help">（含 Scripts 的目录）</span></span>
+              <button type="button" class="choose-folder" id="choose-folder">选择文件夹</button>
+              
+            </div>
+            <div class="import-selected" id="import-selected" hidden>
+              <p class="import-status" id="import-status" role="status"></p>
+              <button type="button" class="clear-folder" id="clear-folder">清除</button>
+            </div>
+            <div class="setting-row">
+              <span class="setting-name">安装位置</span>
+              <div class="location-control">
+                <input class="location-input" id="install-location" aria-label="安装位置" value="%LOCALAPPDATA%\Programs\PlotKityCat" spellcheck="false">
+                <button type="button" class="choose-folder" id="browse-location">浏览</button>
+              </div>
+            </div>
+          </div></div></div>
+        </div>
+      </main>
+    </section>
+  </div>
+  <script src="setup.js"></script>
+</body>
+</html>

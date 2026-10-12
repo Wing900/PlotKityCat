@@ -4,9 +4,17 @@ import (
 	"errors"
 
 	"plotkitycat/internal/updater"
+	"plotkitycat/internal/upgrade"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
+
+func (a *App) ReportUpgradeReady() error {
+	if err := a.requireContext(); err != nil {
+		return err
+	}
+	return upgrade.ReportReady()
+}
 
 func (a *App) GetUpdateStatus() (UpdateStatus, error) {
 	if a.updateService == nil {

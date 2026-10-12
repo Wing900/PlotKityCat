@@ -47,6 +47,10 @@ func EvaluateStatus(requirements []Requirement) (Status, error) {
 	if err != nil {
 		return Status{}, err
 	}
+	return evaluateStatusAt(runtimeDir, archivePath, requirements)
+}
+
+func evaluateStatusAt(runtimeDir, archivePath string, requirements []Requirement) (Status, error) {
 
 	_, archiveStatErr := os.Stat(archivePath)
 	archiveExists := archiveStatErr == nil

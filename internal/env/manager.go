@@ -48,22 +48,13 @@ func (m *Manager) Rebuild(onProgress func(Progress)) error {
 		return err
 	}
 
-	runtimeDir, err := paths.RuntimeDir()
-	if err != nil {
-		return err
-	}
-
 	reportProgress(onProgress, Progress{
 		Stage:   "rebuilding",
 		Message: "Rebuilding runtime",
 		Percent: 8,
 	})
 
-	if err := os.RemoveAll(runtimeDir); err != nil {
-		return err
-	}
-
-	return m.ensureRuntimeExtracted(onProgress)
+	return m.ensureRuntime(onProgress, true)
 }
 
 func reportProgress(onProgress func(Progress), progress Progress) {

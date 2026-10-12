@@ -9,6 +9,7 @@ import (
 	"plotkitycat/internal/installeddata"
 	"plotkitycat/internal/instancelock"
 	"plotkitycat/internal/startupdiag"
+	"plotkitycat/internal/upgrade"
 	"plotkitycat/internal/windowmetrics"
 
 	"github.com/wailsapp/wails/v2"
@@ -27,6 +28,13 @@ func main() {
 			os.Exit(1)
 		}
 	}()
+
+	if recovering, err := upgrade.RecoverStartup(); err != nil {
+		startupdiag.ShowStartupError("PlotKityCat Upgrade Recovery", startupdiag.StartupErrorMessage(err))
+		return
+	} else if recovering {
+		return
+	}
 
 	lock, err := instancelock.Acquire()
 	if err != nil {

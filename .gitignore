@@ -7,6 +7,9 @@ build/release/
 build/update/
 /runtime/
 /runtime.tmp/
+/cmd/setup/build/
+/cmd/setup/frontend/
+/cmd/setup/ui/wailsjs/
 *.exe
 *.dll
 *.zip
@@ -41,3 +44,19 @@ designcard-tec.md
 
 # Local experiment sandbox (prompt eval / card gen)
 .tmp/
+
+# Local scratch & tooling state
+/.wrangler/
+/tmp/
+/tools/moodle/profile/
+/tools/aliyunpan/profile/
+/e.txt
+/err.txt
+/err2.txt
+/err3.txt
+/g1.txt
+/g1e.txt
+/g2.txt
+/g2e.txt
+/o.txt
+/shot.png

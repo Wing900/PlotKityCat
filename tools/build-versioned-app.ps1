@@ -1,6 +1,6 @@
 param(
     [string]$Version = "",
-    [string]$UpdateManifestURL = "https://update.5051001.xyz/plotkitycat/stable/manifest.json",
+    [string]$UpdateManifestURL = "https://update.5051001.xyz/plotkitycat/stable-v2/manifest.json",
     [switch]$SkipBindings
 )
 
@@ -25,6 +25,10 @@ if (
     throw "Update Manifest URL must use HTTPS: $UpdateManifestURL"
 }
 $UpdateManifestURL = $UpdateManifestURL.Trim()
+$wailsConfigPath = Join-Path $repoRoot "wails.json"
+$wailsConfig = Get-Content -LiteralPath $wailsConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json
+$wailsConfig.info.productVersion = $Version
+[IO.File]::WriteAllText($wailsConfigPath, ($wailsConfig | ConvertTo-Json -Depth 8), [Text.UTF8Encoding]::new($false))
 
 $ldflags = (
     "-X plotkitycat/internal/version.appVersion=$Version " +

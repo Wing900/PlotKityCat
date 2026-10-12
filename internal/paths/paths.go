@@ -93,6 +93,13 @@ func RuntimeDir() (string, error) {
 		return "", err
 	}
 
+	revision, err := RuntimeRevision()
+	if err != nil {
+		return "", err
+	}
+	if revision != "" {
+		return filepath.Join(root, "runtime", "versions", revision), nil
+	}
 	return filepath.Join(root, "runtime"), nil
 }
 
@@ -120,12 +127,12 @@ func RuntimeExtractorPath() (string, error) {
 }
 
 func RuntimeTempDir() (string, error) {
-	root, err := DataRoot()
+	root, err := RuntimeDir()
 	if err != nil {
 		return "", err
 	}
 
-	return filepath.Join(root, "runtime.tmp"), nil
+	return root + ".tmp", nil
 }
 
 func ScreeningZoomExecutablePath() (string, error) {

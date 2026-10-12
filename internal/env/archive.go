@@ -2,6 +2,8 @@ package env
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -19,6 +21,10 @@ import (
 var archiveProgressPattern = regexp.MustCompile(`(?:^|\D)(\d{1,3})%(?:$|\D)`)
 
 func (m *Manager) ensureRuntimeExtracted(onProgress func(Progress)) error {
+	return m.ensureRuntime(onProgress, false)
+}
+
+func (m *Manager) ensureRuntime(onProgress func(Progress), force bool) error {
 	reportProgress(onProgress, Progress{
 		Stage:   "checking",
 		Message: "Checking runtime",
@@ -29,7 +35,7 @@ func (m *Manager) ensureRuntimeExtracted(onProgress func(Progress)) error {
 	if err != nil {
 		return err
 	}
-	if status.Ready {
+	if status.Ready && !force {
 		reportProgress(onProgress, Progress{
 			Stage:   "ready",
 			Message: "Runtime ready",
@@ -45,6 +51,25 @@ func (m *Manager) ensureRuntimeExtracted(onProgress func(Progress)) error {
 
 	if _, err := os.Stat(archivePath); err != nil {
 		return fmt.Errorf("runtime archive not found: %s", archivePath)
+	}
+	revision, err := paths.RuntimeRevision()
+	if err != nil {
+		return err
+	}
+	if revision != "" {
+		archive, err := os.Open(archivePath)
+		if err != nil {
+			return err
+		}
+		hash := sha256.New()
+		_, copyErr := io.Copy(hash, archive)
+		archive.Close()
+		if copyErr != nil {
+			return copyErr
+		}
+		if hex.EncodeToString(hash.Sum(nil)) != revision {
+			return fmt.Errorf("runtime archive digest mismatch")
+		}
 	}
 
 	extractorPath, err := paths.RuntimeExtractorPath()
@@ -83,6 +108,13 @@ func (m *Manager) ensureRuntimeExtracted(onProgress func(Progress)) error {
 		_ = os.RemoveAll(tempDir)
 		return err
 	}
+	stagedStatus, err := evaluateStatusAt(tempDir, archivePath, DefaultRequirements())
+	if err != nil {
+		return err
+	}
+	if !stagedStatus.Ready {
+		return fmt.Errorf("staged runtime failed validation: %s", stagedStatus.Summary)
+	}
 
 	reportProgress(onProgress, Progress{
 		Stage:   "installing",
@@ -113,25 +145,39 @@ func (m *Manager) ensureRuntimeExtracted(onProgress func(Progress)) error {
 }
 
 func installRuntimeFromTemp(tempDir string, runtimeDir string) error {
-	if err := os.RemoveAll(runtimeDir); err != nil {
+	if err := os.MkdirAll(filepath.Dir(runtimeDir), 0700); err != nil {
 		return err
 	}
-
-	if err := retryRename(tempDir, runtimeDir, 8, 250*time.Millisecond); err == nil {
-		return nil
-	}
-
-	// Windows may transiently deny directory rename while Defender or shell
-	// components still hold short-lived handles on freshly extracted files.
-	// Fall back to a copy-based install so runtime rebuild remains reliable.
-	if err := os.MkdirAll(runtimeDir, 0o755); err != nil {
+	backup, err := os.MkdirTemp(filepath.Dir(runtimeDir), ".runtime-backup-")
+	if err != nil {
 		return err
 	}
-	if err := copyDirContents(tempDir, runtimeDir); err != nil {
+	if err := os.Remove(backup); err != nil {
 		return err
 	}
-
-	return os.RemoveAll(tempDir)
+	existed := false
+	if info, err := os.Lstat(runtimeDir); err == nil {
+		if !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("runtime directory type invalid")
+		}
+		if err := retryRename(runtimeDir, backup, 8, 250*time.Millisecond); err != nil {
+			return err
+		}
+		existed = true
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	if err := retryRename(tempDir, runtimeDir, 8, 250*time.Millisecond); err != nil {
+		if existed {
+			if rollbackErr := os.Rename(backup, runtimeDir); rollbackErr != nil {
+				return fmt.Errorf("runtime activation failed: %v; backup retained at %s: %w", err, backup, rollbackErr)
+			}
+		}
+		return err
+	}
+	// Retain a rebuilt environment's backup for operator recovery. Other archive
+	// revisions remain in versions/, allowing application rollback to reuse them.
+	return nil
 }
 
 func retryRename(source string, target string, attempts int, delay time.Duration) error {

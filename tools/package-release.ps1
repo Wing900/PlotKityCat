@@ -2,7 +2,7 @@ param(
     [string]$Version = "",
     [string]$UpdateManifestURL = "",
     [ValidateSet("Portable", "Installed")]
-    [string]$Layout = "Portable"
+    [string]$Layout = "Installed"
 )
 
 $ErrorActionPreference = "Stop"
@@ -177,6 +177,8 @@ New-Item -ItemType Directory -Path (Join-Path $releaseRoot "resources/runtime") 
 New-Item -ItemType Directory -Path (Join-Path $releaseRoot "resources/runtime/7zip") -Force | Out-Null
 Copy-Item -LiteralPath $binExe -Destination (Join-Path $releaseRoot "PlotKityCat.exe") -Force
 Copy-Item -LiteralPath $runtimeArchive -Destination (Join-Path $releaseRoot "resources/runtime/runtime.7z") -Force
+$runtimeRelease = @{ sha256 = (Get-FileHash -LiteralPath $runtimeArchive -Algorithm SHA256).Hash.ToLowerInvariant() } | ConvertTo-Json
+[IO.File]::WriteAllText((Join-Path $releaseRoot "resources/runtime/release.json"), $runtimeRelease, [Text.UTF8Encoding]::new($false))
 Copy-Item -LiteralPath (Join-Path $runtime7ZipDir "7za.exe") -Destination (Join-Path $releaseRoot "resources/runtime/7zip/7za.exe") -Force
 Copy-Item -LiteralPath (Join-Path $runtime7ZipDir "7za.dll") -Destination (Join-Path $releaseRoot "resources/runtime/7zip/7za.dll") -Force
 

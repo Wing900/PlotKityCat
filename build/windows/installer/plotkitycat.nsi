@@ -40,6 +40,30 @@ Var ImportCheck
 Var ImportEdit
 Var ImportBrowse
 Var LegacySource
+Var ProgressFile
+Var ExistingInstallDir
+Var ExtractOnly
+Var RegisterOnly
+
+!macro ReportFailure MESSAGE CODE
+  ${If} $ProgressFile != ""
+    FileOpen $9 "$ProgressFile.error" w
+    FileWriteUTF16LE /BOM $9 "${MESSAGE}"
+    FileClose $9
+  ${EndIf}
+  IfSilent +2 0
+    MessageBox MB_OK|MB_ICONSTOP "${MESSAGE}"
+  SetErrorLevel ${CODE}
+  Abort
+!macroend
+
+!macro ReportProgress VALUE
+  ${If} $ProgressFile != ""
+    FileOpen $9 "$ProgressFile" w
+    FileWrite $9 "${VALUE}"
+    FileClose $9
+  ${EndIf}
+!macroend
 
 !define MUI_ABORTWARNING
 !define MUI_FINISHPAGE_RUN "$INSTDIR\PlotKityCat.exe"
@@ -65,6 +89,25 @@ Function .onInit
     Quit
   ${EndIf}
   StrCpy $LegacySource ""
+  StrCpy $ProgressFile ""
+  ${GetParameters} $8
+  ${GetOptions} $8 "/PROGRESS=" $ProgressFile
+  ${GetOptions} $8 "/LEGACY=" $LegacySource
+  ${GetOptions} $8 "/EXTRACTONLY" $ExtractOnly
+  IfErrors +2 0
+    StrCpy $ExtractOnly "yes"
+  ${GetOptions} $8 "/REGISTERONLY" $RegisterOnly
+  IfErrors +2 0
+    StrCpy $RegisterOnly "yes"
+  ReadRegStr $ExistingInstallDir HKCU "${UNINSTALL_KEY}" "InstallLocation"
+  ${If} $ExtractOnly != "yes"
+  ${AndIf} $RegisterOnly != "yes"
+    MessageBox MB_OK|MB_ICONSTOP "请通过 PlotKityCat 安装界面启动安装。"
+    SetErrorLevel 4
+    Quit
+  ${EndIf}
+  ; Start failed; only the final committed section may set success.
+  SetErrorLevel 1
 FunctionEnd
 
 Function InstallOptions
@@ -148,9 +191,7 @@ Function CheckExecutableUnlocked
   ${If} ${FileExists} "$0"
     System::Call 'kernel32::CreateFileW(w r0, i 0x40000000, i 0, p 0, i 3, i 0, p 0) p.r1'
     ${If} $1 == -1
-      MessageBox MB_OK|MB_ICONSTOP "请先退出 PlotKityCat，再进行安装或导入。$\r$\n文件：$0"
-      SetErrorLevel 2
-      Abort
+      !insertmacro ReportFailure "请先退出 PlotKityCat，再进行安装或导入。" 2
     ${EndIf}
     System::Call 'kernel32::CloseHandle(p r1)'
   ${EndIf}
@@ -177,21 +218,49 @@ Function DetectWebView
 FunctionEnd
 
 Section "Install"
-  ; Keep the installer and updater in a predictable writable per-user path.
-  ${If} $INSTDIR != "$LOCALAPPDATA\Programs\PlotKityCat"
-    MessageBox MB_OK|MB_ICONSTOP "此安装包使用当前用户的默认安装目录，不支持 /D 更改目录。"
-    Abort
+  ${If} $RegisterOnly == "yes"
+    Goto RegisterInstallation
+  ${EndIf}
+  GetFullPathName $INSTDIR "$INSTDIR"
+  ${GetRoot} "$INSTDIR" $0
+  ${If} $INSTDIR == "$0\"
+    !insertmacro ReportFailure "请选择独立的 PlotKityCat 安装目录。" 4
+  ${EndIf}
+  ${If} $INSTDIR == "$LOCALAPPDATA\PlotKityCat"
+    !insertmacro ReportFailure "安装目录不能与用户数据目录相同。" 4
+  ${EndIf}
+  ${If} $ExtractOnly != "yes"
+  ${If} $ExistingInstallDir != ""
+    GetFullPathName $0 "$ExistingInstallDir"
+    ${If} $INSTDIR != $0
+      !insertmacro ReportFailure "请先卸载旧安装，再更改安装位置；作品会保留。" 4
+    ${EndIf}
+  ${EndIf}
   ${EndIf}
   ${If} ${FileExists} "$INSTDIR\PlotKityCat.exe"
     ${IfNot} ${FileExists} "$INSTDIR\.plotkitycat-installed"
-      MessageBox MB_OK|MB_ICONSTOP "安装目录中存在旧版程序。请先保留并移走该目录，再安装。"
-      Abort
+      !insertmacro ReportFailure "安装目录中存在旧版程序，请选择空文件夹。" 4
     ${EndIf}
   ${EndIf}
   Push "$INSTDIR\PlotKityCat.exe"
   Call CheckExecutableUnlocked
+  ${If} $LegacySource != ""
+    ${IfNot} ${FileExists} "$LegacySource\PlotKityCat.exe"
+      !insertmacro ReportFailure "请选择含 Scripts 的旧版软件目录。" 4
+    ${EndIf}
+    ${IfNot} ${FileExists} "$LegacySource\Scripts\*.*"
+      !insertmacro ReportFailure "请选择含 Scripts 的旧版软件目录。" 4
+    ${EndIf}
+    ${If} ${FileExists} "$LegacySource\.plotkitycat-installed"
+      !insertmacro ReportFailure "请选择旧 ZIP 版目录。" 4
+    ${EndIf}
+    Push "$LegacySource\PlotKityCat.exe"
+    Call CheckExecutableUnlocked
+  ${EndIf}
+  !insertmacro ReportProgress "10"
   Call DetectWebView
   ${If} $0 == ""
+    !insertmacro ReportProgress "20"
     DetailPrint "正在安装 WebView2，需要联网..."
     InitPluginsDir
     SetOutPath "$PLUGINSDIR"
@@ -199,25 +268,45 @@ Section "Install"
     ExecWait '"$PLUGINSDIR\MicrosoftEdgeWebview2Setup.exe" /silent /install' $1
     Call DetectWebView
     ${If} $0 == ""
-      MessageBox MB_OK|MB_ICONSTOP "WebView2 安装未完成。请连接网络后重试。"
-      SetErrorLevel 3
-      Abort
+      !insertmacro ReportFailure "WebView2 安装未完成，请联网后重试。" 3
     ${EndIf}
   ${EndIf}
+  !insertmacro ReportProgress "40"
+  ClearErrors
   SetOutPath "$INSTDIR"
+  ${If} ${Errors}
+    !insertmacro ReportFailure "无法写入安装目录，请选择有写入权限的位置。" 5
+  ${EndIf}
   SetOverwrite on
   ClearErrors
   File /r "${PAYLOAD_DIR}\*.*"
-  IfErrors 0 +3
-    MessageBox MB_OK|MB_ICONSTOP "程序文件写入失败，请检查剩余空间和目录权限后重试。"
-    Abort
+  ${If} ${Errors}
+    !insertmacro ReportFailure "文件写入失败，请检查剩余空间和目录权限。" 5
+  ${EndIf}
   ; Keep a pending import request through reinstalls until initialization.
   ${If} $LegacySource != ""
+    ClearErrors
     FileOpen $0 "$INSTDIR\.plotkitycat-legacy-source" w
     FileWriteUTF16LE /BOM $0 "$LegacySource"
     FileClose $0
+    ${If} ${Errors}
+      !insertmacro ReportFailure "无法保存旧版导入目录，请重试。" 5
+    ${EndIf}
   ${EndIf}
   WriteUninstaller "$INSTDIR\uninstall.exe"
+  ${If} ${Errors}
+    !insertmacro ReportFailure "无法写入卸载程序。" 5
+  ${EndIf}
+  ${If} $ExtractOnly == "yes"
+    SetErrorLevel 0
+    Goto InstallationDone
+  ${EndIf}
+RegisterInstallation:
+  ${IfNot} ${FileExists} "$INSTDIR\.plotkitycat-installed"
+    !insertmacro ReportFailure "安装标记缺失，无法登记。" 5
+  ${EndIf}
+  !insertmacro ReportProgress "90"
+  ClearErrors
   CreateDirectory "$SMPROGRAMS\PlotKityCat"
   CreateShortcut "$SMPROGRAMS\PlotKityCat\PlotKityCat.lnk" "$INSTDIR\PlotKityCat.exe"
   CreateShortcut "$SMPROGRAMS\PlotKityCat\卸载.lnk" "$INSTDIR\uninstall.exe"
@@ -231,13 +320,30 @@ Section "Install"
   WriteRegStr HKCU "${UNINSTALL_KEY}" "QuietUninstallString" '$\"$INSTDIR\uninstall.exe$\" /S'
   WriteRegDWORD HKCU "${UNINSTALL_KEY}" "NoModify" 1
   WriteRegDWORD HKCU "${UNINSTALL_KEY}" "NoRepair" 1
+  ${If} ${Errors}
+    !insertmacro ReportFailure "快捷方式或卸载信息写入失败，请重试。" 5
+  ${EndIf}
+  !insertmacro ReportProgress "100"
+  SetErrorLevel 0
+InstallationDone:
 SectionEnd
 
 Function un.onInit
   SetShellVarContext current
   SetRegView 64
-  ${If} $INSTDIR != "$LOCALAPPDATA\Programs\PlotKityCat"
-    MessageBox MB_OK|MB_ICONSTOP "卸载目录与默认安装目录不一致，已停止卸载。"
+  ${If} ${FileExists} "$INSTDIR\.plotkitycat-upgrade\pending.json"
+    MessageBox MB_OK|MB_ICONSTOP "升级尚未完成，请先打开软件恢复，再卸载。"
+    Abort
+  ${EndIf}
+  ReadRegStr $0 HKCU "${UNINSTALL_KEY}" "InstallLocation"
+  ${If} $0 == ""
+    MessageBox MB_OK|MB_ICONSTOP "卸载登记缺失，已停止卸载。"
+    Abort
+  ${EndIf}
+  GetFullPathName $0 "$0"
+  GetFullPathName $INSTDIR "$INSTDIR"
+  ${If} $INSTDIR != $0
+    MessageBox MB_OK|MB_ICONSTOP "卸载目录与登记位置不一致，已停止卸载。"
     Abort
   ${EndIf}
   ${IfNot} ${FileExists} "$INSTDIR\.plotkitycat-installed"

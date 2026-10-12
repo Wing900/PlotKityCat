@@ -1,31 +1,23 @@
 package updater
 
-type Manifest struct {
-	Version     string            `json:"version"`
-	Notes       string            `json:"notes"`
-	PublishedAt string            `json:"publishedAt"`
-	Windows     ReleaseArtifact   `json:"windows"`
-	Channels    map[string]string `json:"channels,omitempty"`
-}
+import "plotkitycat/internal/releaseauth"
 
-type ReleaseArtifact struct {
-	URL    string `json:"url"`
-	SHA256 string `json:"sha256"`
-	Size   int64  `json:"size,omitempty"`
-}
+type Manifest = releaseauth.Manifest
+type ReleaseArtifact = releaseauth.Artifact
 
 type State struct {
-	LastCheckedAt       string `json:"lastCheckedAt"`
-	LatestVersion       string `json:"latestVersion"`
-	LatestNotes         string `json:"latestNotes"`
-	LatestPublishedAt   string `json:"latestPublishedAt"`
-	DownloadedVersion   string `json:"downloadedVersion"`
-	DownloadedPath      string `json:"downloadedPath"`
-	DownloadedSHA256    string `json:"downloadedSha256"`
-	LastKnownArtifact   string `json:"lastKnownArtifact"`
-	LastKnownMessage    string `json:"lastKnownMessage"`
-	LastKnownAvailable  bool   `json:"lastKnownAvailable"`
-	LastKnownDownloaded bool   `json:"lastKnownDownloaded"`
+	LastCheckedAt       string    `json:"lastCheckedAt"`
+	LatestVersion       string    `json:"latestVersion"`
+	LatestNotes         string    `json:"latestNotes"`
+	LatestPublishedAt   string    `json:"latestPublishedAt"`
+	DownloadedVersion   string    `json:"downloadedVersion"`
+	DownloadedPath      string    `json:"downloadedPath"`
+	DownloadedSHA256    string    `json:"downloadedSha256"`
+	DownloadedManifest  *Manifest `json:"downloadedManifest,omitempty"`
+	LastKnownArtifact   string    `json:"lastKnownArtifact"`
+	LastKnownMessage    string    `json:"lastKnownMessage"`
+	LastKnownAvailable  bool      `json:"lastKnownAvailable"`
+	LastKnownDownloaded bool      `json:"lastKnownDownloaded"`
 }
 
 type Status struct {
