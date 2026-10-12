@@ -28,10 +28,11 @@ func main() {
 	}
 	app := setup.New(engine)
 	err = wails.Run(&options.App{
-		// 680 = 展开安装选项 + 已选旧版目录（长名折行）实测 625px + 余量，
-		// 避免出现窗口滚动条。
-		Title: "PlotKityCat 安装", Width: 620, Height: 680,
-		MinWidth: 620, MinHeight: 680, DisableResize: true, Frameless: true,
+		// 最高内容是「展开安装选项 + 已选旧版目录 + 状态折两行」，实测 625px；
+		// main 底 padding 由 56 收到 20 后再减 36px，得 589px。取 600 留 11px 余量，
+		// 兼顾滚动条不出现与窗口不过长。
+		Title: "PlotKityCat 安装", Width: 620, Height: 600,
+		MinWidth: 620, MinHeight: 600, DisableResize: true, Frameless: true,
 		BackgroundColour: options.NewRGB(255, 255, 255),
 		AssetServer:      &assetserver.Options{Assets: ui},
 		Bind:             []interface{}{app}, OnStartup: app.Startup, OnBeforeClose: app.BeforeClose,

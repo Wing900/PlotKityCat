@@ -58,7 +58,7 @@
     }
     .window-actions button:hover { background: var(--surface); color: var(--ink); }
     .window-actions svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.3; }
-    main { padding: 24px 52px 56px; text-align: center; }
+    main { padding: 24px 52px 20px; text-align: center; }
     .logo { display: block; width: 132px; height: 132px; margin: 0 auto 20px; border-radius: 16px; }
     h1 { margin: 0; font-size: 28px; line-height: 1.3; letter-spacing: -.7px; font-weight: 600; }
     .description { margin: 12px 0 30px; font-size: 13px; line-height: 1.6; color: var(--soft); }
@@ -95,7 +95,9 @@
     .choose-folder:hover { background: #efefeb; }
     .location-control { min-width: 0; display: flex; align-items: center; gap: 6px; flex: 1; }
     .location-input { width: 100%; min-width: 0; border: 0; border-radius: 7px; background: var(--surface); padding: 7px 9px; color: var(--soft); font-size: 11px; }
-    .import-status { margin: 0 0 12px; font-size: 11px; color: #69785c; overflow-wrap: anywhere; line-height: 1.7; }
+    /* 折行数封顶，否则超长旧版路径会把窗口撑到超出固定高度、重新长出滚动条。 */
+    .import-status { margin: 0 0 12px; font-size: 11px; color: #69785c; overflow-wrap: anywhere; line-height: 1.7;
+      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
     .import-help { margin-left: 6px; font-size: 11px; color: var(--muted); }
     .import-status.error { color: #a56353; }
     .import-selected { display: flex; align-items: flex-start; gap: 8px; }
