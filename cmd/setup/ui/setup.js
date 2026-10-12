@@ -3,7 +3,6 @@ const backend = window.go.setup.Installer;
 const optionsPanel = () => get("options-panel");
 const optionsOpen = () => optionsPanel().classList.contains("open");
 let state = "ready", legacy = "", requested = 0, scale = 0, raf = 0, closeTimer = 0;
-let openHeight = 0; // 展开态预留高度，加载时算一次
 
 const contentHeight = () => Math.ceil(
   document.querySelector(".titlebar").getBoundingClientRect().height +
@@ -24,6 +23,11 @@ function requestHeight(cssHeight) {
 }
 
 function applyHeight(height) {
+  // 护栏：窗口任何时刻都不得矮于当前内容。某条路径算错、或 MoveWindow 落地、
+  // WebView2 重排、合成器跟上之间有时差时，这一步保证窗口至少装得下现在的内容，
+  // 滚动条无处可生。也顺带挡住「先缩短一下再长」这类反向动画。
+  const floor = scale > 0 ? Math.ceil((contentHeight() + 2) / scale) : height;
+  if (height < floor) height = floor;
   if (height === requested) return;
   requested = height;
   backend.FitWindow(height).catch(() => {});
@@ -79,6 +83,23 @@ function measureOpenHeight(includeSelectedRow) {
   return height;
 }
 
+// 展开前必须确认窗口真的长到位再放内容：MoveWindow 落地、WebView2 重新布局、
+// 合成器跟上，这三步可能落后于布局查询，查询说够了而屏幕还是旧的矮窗口，就会
+// 闪出滚动条。所以以「CSS 视口 ≥ 目标」为准，最多等 1s，再等两帧让合成器跟上。
+function revealWhenFits(target, reveal) {
+  let waited = 0;
+  const check = () => {
+    if (viewportHeight() + 1 >= target) {
+      requestAnimationFrame(() => requestAnimationFrame(reveal));
+      return;
+    }
+    waited += 16;
+    if (waited > 1000) { reveal(); return; }
+    setTimeout(check, 16);
+  };
+  check();
+}
+
 function showError(error) {
   get("description").textContent = String(error?.message || error);
   // 展开态的预留高度已含两行描述；只有面板还收着时才需要调窗口。
@@ -90,11 +111,13 @@ function setOptionsOpen(open) {
   get("toggle-options").setAttribute("aria-expanded", open);
   clearTimeout(closeTimer);
   if (open) {
-    // 先把窗口长到展开态预留高度，到位后再放内容进来：中间任何一帧都不会有滚动条。
-    resizeAnimated(openHeight, () => {
+    // 先把窗口长到展开态预留高度，确认真的长到位后再放内容进来：
+    // 中间任何一帧都不会有滚动条。目标每次现量，不用可能过期的缓存值。
+    const target = measureOpenHeight(!get("legacy-row").hidden);
+    resizeAnimated(target, () => revealWhenFits(target, () => {
       optionsPanel().inert = false;
       optionsPanel().classList.add("open");
-    });
+    }));
     return;
   }
   optionsPanel().inert = true;
@@ -133,7 +156,7 @@ get("choose-folder").addEventListener("click", async () => {
     get("import-status").title = path;
     get("choose-folder").textContent = "重新选择";
     get("description").textContent = "安装完成后，即可从桌面打开。";
-    // 已选行的高度已含在 openHeight 预留里，这里不需要动窗口。
+    // 已选行的高度已含在展开态预留里，这里不需要动窗口。
   } catch (error) { showError(error); }
 });
 get("clear-folder").addEventListener("click", () => {
@@ -183,7 +206,7 @@ get("install").addEventListener("click", async () => {
     setBusy(false);
     showError(error);
     // 选项区要回来。先长到预留高度，再一起显示，否则会闪一帧滚动条。
-    resizeAnimated(openHeight, () => {
+    resizeAnimated(measureOpenHeight(!get("legacy-row").hidden), () => {
       get("progress").hidden = true;
       get("install").hidden = false;
       get("options").hidden = false;
@@ -196,8 +219,5 @@ backend.Configuration().then(config => {
   get("install-location").value = config.installDir;
   get("legacy-row").hidden = config.hasData;
   requested = config.windowHeight; // 标定起点：Wails 建窗时用的逻辑高度
-  requestAnimationFrame(() => {
-    openHeight = measureOpenHeight(!get("legacy-row").hidden);
-    resizeNow(contentHeight());
-  });
+  requestAnimationFrame(() => resizeNow(contentHeight()));
 }).catch(showError);
