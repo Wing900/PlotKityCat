@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildAINoteSelectionPayload,
+  buildFullAINoteSelectionPayload,
   collectSelectedImagesForContextMenu,
   extractImagePathsFromSelection,
   normalizeImageReferencePath,
@@ -50,5 +51,29 @@ describe("noteSelection", () => {
 
   it("空选择返回 null", () => {
     expect(buildAINoteSelectionPayload(document, null, {})).toBeNull();
+  });
+
+  it("整篇笔记附带引用图片的内容，排除未使用的图片", () => {
+    const markdown = "根据这张图生成设计卡\n\n![one](<images/one.png>)";
+    expect(buildFullAINoteSelectionPayload({ ...document, markdown })).toEqual({
+      items: [
+        { kind: "text", text: markdown },
+        { kind: "image", ...document.images[0] },
+      ],
+    });
+  });
+
+  it("文字与图片共同选中时保留文字，并对同一图片去重", () => {
+    const text = "请标出角度\n![one](images/one.png)";
+    expect(buildAINoteSelectionPayload(
+      document,
+      { text, selectedAt: 10 },
+      { "images/one.png": 20 },
+    )).toEqual({
+      items: [
+        { kind: "text", text },
+        { kind: "image", ...document.images[0] },
+      ],
+    });
   });
 });

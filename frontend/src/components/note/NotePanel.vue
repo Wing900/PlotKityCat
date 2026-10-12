@@ -190,7 +190,8 @@ const {
   buildSelectionPayload,
   closeContextMenu,
   currentFile: () => props.currentFile,
-  getDocumentMarkdown: () => props.document.markdown,
+  getDocument: () => props.document,
+  getDesignCards: () => props.designCards,
   onDesign: (request) => emit("ai-design", request),
   onGenerate: (request) => emit("ai-generate", request),
 });

@@ -2,12 +2,16 @@ import type {
   AINoteSceneActionRequest,
   AINoteSelectionPayload,
 } from "../../features/ai/services/aiTypes";
+import type { DesignCard } from "../../features/designCard/services/designCardTypes";
+import type { NoteDocument } from "../../features/notebook/services/notebookStorage";
+import { buildFullAINoteSelectionPayload } from "../../features/notebook/selection/noteSelection";
 
 type NoteAIActionsOptions = {
   buildSelectionPayload: () => AINoteSelectionPayload | null;
   closeContextMenu: () => void;
   currentFile: () => string;
-  getDocumentMarkdown: () => string;
+  getDocument: () => NoteDocument;
+  getDesignCards: () => DesignCard[];
   onDesign: (request: AINoteSceneActionRequest) => void;
   onGenerate: (request: AINoteSceneActionRequest) => void;
 };
@@ -43,21 +47,11 @@ export function useNoteAIActions(options: NoteAIActionsOptions) {
     if (selected?.items.length) {
       return selected;
     }
-    return buildFullDocumentSelection(options.getDocumentMarkdown());
+    return buildFullAINoteSelectionPayload(options.getDocument(), options.getDesignCards());
   }
 
   return {
     runAIDesign,
     runAIGeneration,
-  };
-}
-
-function buildFullDocumentSelection(markdown: string): AINoteSelectionPayload | null {
-  const text = markdown.trim();
-  if (!text) {
-    return null;
-  }
-  return {
-    items: [{ kind: "text", text }],
   };
 }

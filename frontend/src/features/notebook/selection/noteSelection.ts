@@ -25,6 +25,11 @@ export function buildAINoteSelectionPayload(
   const addedImagePaths = new Set<string>();
 
   if (textSelection?.text) {
+    orderedItems.push({
+      kind: "text",
+      text: expandDesignCardReferences(textSelection.text, designCards),
+      selectedAt: textSelection.selectedAt,
+    });
     const referencedImages = resolveImagesFromSelectedText(document, textSelection.text);
     if (referencedImages.length > 0) {
       referencedImages.forEach((image) => {
@@ -37,12 +42,6 @@ export function buildAINoteSelectionPayload(
           relativePath: image.relativePath,
           selectedAt: textSelection.selectedAt,
         });
-      });
-    } else {
-      orderedItems.push({
-        kind: "text",
-        text: expandDesignCardReferences(textSelection.text, designCards),
-        selectedAt: textSelection.selectedAt,
       });
     }
   }
@@ -71,6 +70,20 @@ export function buildAINoteSelectionPayload(
   return {
     items: orderedItems.map(({ selectedAt: _selectedAt, ...item }) => item),
   };
+}
+
+// Full-document actions use the same multimodal context builder as explicit
+// selections. Only images referenced by the document are included, so unused
+// assets do not get sent to the model.
+export function buildFullAINoteSelectionPayload(
+  document: NoteDocument,
+  designCards: DesignCard[] = [],
+): AINoteSelectionPayload | null {
+  const text = document.markdown.trim();
+  if (!text) {
+    return null;
+  }
+  return buildAINoteSelectionPayload(document, { text, selectedAt: 1 }, {}, designCards);
 }
 
 function expandDesignCardReferences(text: string, designCards: DesignCard[]) {
