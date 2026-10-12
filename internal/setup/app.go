@@ -22,7 +22,27 @@ type Configuration struct {
 	InstallDir string `json:"installDir"`
 	HasData    bool   `json:"hasData"`
 	Version    string `json:"version"`
+	// WindowHeight lets the frontend translate CSS pixels into the logical
+	// pixels Wails passes to the window, which can differ (see FitWindow).
+	WindowHeight int `json:"windowHeight"`
 }
+
+// WindowWidth and InitialWindowHeight are the logical-pixel size the window is
+// created with. The options panel changes the content height by ~150px, so the
+// frontend keeps the window fitted to its content through FitWindow; the
+// initial height only has to hold the collapsed state.
+const (
+	WindowWidth         = 620
+	InitialWindowHeight = 520
+)
+
+// Bounds for FitWindow, in the same logical pixels. A collapsed installer needs
+// about 433 CSS pixels of content; renderer scale can make the fitting request
+// larger than the CSS height, so the floor stays below it.
+const (
+	minWindowHeight = 420
+	maxWindowHeight = 1100
+)
 
 type Progress struct {
 	Message string `json:"message"`
@@ -57,7 +77,27 @@ func (a *Installer) Configuration() (Configuration, error) {
 		install = filepath.Join(root, "Programs", "PlotKityCat")
 	}
 	_, err = os.Stat(filepath.Join(root, "PlotKityCat", ".initialized-v1"))
-	return Configuration{InstallDir: install, HasData: err == nil, Version: version.Current()}, nil
+	return Configuration{
+		InstallDir:   install,
+		HasData:      err == nil,
+		Version:      version.Current(),
+		WindowHeight: InitialWindowHeight,
+	}, nil
+}
+
+// FitWindow resizes the window to a height the frontend measured from its own
+// content, in the logical pixels Wails converts with the window DPI. WebView2
+// can lay content out at a renderer scale that disagrees with that DPI, so the
+// frontend scales the last request by the measured content instead of trusting
+// the CSS viewport to equal the window height.
+func (a *Installer) FitWindow(height int) {
+	if height < minWindowHeight {
+		height = minWindowHeight
+	}
+	if height > maxWindowHeight {
+		height = maxWindowHeight
+	}
+	runtime.WindowSetSize(a.ctx, WindowWidth, height)
 }
 
 func (a *Installer) SelectInstallDirectory() (string, error) {
