@@ -5,7 +5,7 @@ import type { AIUsageToday } from "../../../ai/services/aiTypes";
 import { createEmptyUsageToday, normalizeUsageToday } from "./usageTodayHelpers";
 
 /**
- * 今日本软件的 token 用量。打开 AI 设置时主动拉一次，之后靠后端在每次
+ * 今日 token 用量。打开 AI 设置时主动拉一次，之后靠后端在每次
  * AI 请求结束后推送的 usage:updated 事件保持实时。
  */
 export function useWorkspaceUsage() {

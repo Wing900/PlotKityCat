@@ -137,14 +137,23 @@
 }
 
 .ai-settings-dialog {
+  display: grid;
+  gap: 24px;
   width: min(48vw, 560px);
   min-height: 0;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.ai-settings-dialog .create-dialog-actions {
+  margin-top: 0;
 }
 
 .ai-settings-body {
   display: grid;
-  gap: 14px;
-  margin-top: 22px;
+  gap: 18px;
+  margin-top: 0;
 }
 
 .ai-mode-card {
@@ -184,23 +193,26 @@
 
 .ai-mode-copy {
   display: grid;
-  gap: 6px;
+  gap: 8px;
 }
 
 .ai-mode-copy strong {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   color: var(--text);
   font-size: 0.92rem;
   font-weight: 500;
   letter-spacing: 0.04em;
+  line-height: 1.5;
 }
 
 .ai-mode-copy small {
   color: var(--muted);
   font-size: 0.78rem;
   letter-spacing: 0.02em;
+  line-height: 1.7;
 }
 
 .ai-support-link {
@@ -240,7 +252,7 @@
 
 .ai-provider-stack {
   display: grid;
-  gap: 12px;
+  gap: 18px;
 }
 
 .ai-provider-stack.muted {
@@ -513,8 +525,9 @@
 }
 
 .ai-usage-today {
-  margin: 0.4rem 0 0;
+  margin: 0;
   color: color-mix(in srgb, var(--text), transparent 35%);
   font-size: 0.82rem;
   letter-spacing: 0.03em;
+  line-height: 1.6;
 }

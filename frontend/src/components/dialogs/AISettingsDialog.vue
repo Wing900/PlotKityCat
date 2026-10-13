@@ -151,8 +151,8 @@ function updateField(field: "url" | "key" | "model", value: string) {
         </div>
 
         <p class="ai-usage-today">
-          今日本软件已用 {{ formatTokenCount(usageToday.totalTokens) }} tokens
-          <span class="ai-inline-divider" aria-hidden="true">|</span>
+          今日用量：{{ formatTokenCount(usageToday.totalTokens) }} tokens
+          <span class="ai-inline-divider" aria-hidden="true">·</span>
           {{ usageToday.requests }} 次请求
         </p>
 
