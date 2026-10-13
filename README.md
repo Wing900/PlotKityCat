@@ -24,18 +24,12 @@
 </h1>
 
 <p>
-  ∫ &nbsp; ∑ &nbsp; ∂ &nbsp; π &nbsp; ∞
-</p>
-
-<p>
   <strong>面向数学教师的 AI-native 可视化教学工具</strong>
 </p>
 
 <p>
   用自然语言生成 Matplotlib 可视化，把公式、代码、图像与教学笔记放进同一个工作区。
 </p>
-
-<div>◆ &nbsp; ◆ &nbsp; ◆</div>
 
 <br>
 
@@ -54,13 +48,13 @@
 
 <p>
   <a href="#下载-windows-版"><strong>下载</strong></a>
-  &nbsp;•&nbsp;
+  &nbsp;|&nbsp;
   <a href="#视频介绍"><strong>视频</strong></a>
-  &nbsp;•&nbsp;
+  &nbsp;|&nbsp;
   <a href="#功能"><strong>功能</strong></a>
-  &nbsp;•&nbsp;
+  &nbsp;|&nbsp;
   <a href="#快速开始"><strong>快速开始</strong></a>
-  &nbsp;•&nbsp;
+  &nbsp;|&nbsp;
   <a href="#文档"><strong>文档</strong></a>
 </p>
 

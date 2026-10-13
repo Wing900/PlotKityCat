@@ -24,18 +24,12 @@ English | [简体中文](./README.md)
 </h1>
 
 <p>
-  ∫ &nbsp; ∑ &nbsp; ∂ &nbsp; π &nbsp; ∞
-</p>
-
-<p>
   <strong>An AI-native visualization tool for mathematics teachers</strong>
 </p>
 
 <p>
   Generate Matplotlib visuals from natural language, and keep formulas, code, figures, and teaching notes in one workspace.
 </p>
-
-<div>◆ &nbsp; ◆ &nbsp; ◆</div>
 
 <br>
 
@@ -54,13 +48,13 @@ English | [简体中文](./README.md)
 
 <p>
   <a href="#downloads-for-windows"><strong>Download</strong></a>
-  &nbsp;•&nbsp;
+  &nbsp;|&nbsp;
   <a href="#video"><strong>Video</strong></a>
-  &nbsp;•&nbsp;
+  &nbsp;|&nbsp;
   <a href="#features"><strong>Features</strong></a>
-  &nbsp;•&nbsp;
+  &nbsp;|&nbsp;
   <a href="#quick-start"><strong>Quick Start</strong></a>
-  &nbsp;•&nbsp;
+  &nbsp;|&nbsp;
   <a href="#documentation"><strong>Documentation</strong></a>
 </p>
 
