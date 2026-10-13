@@ -3,7 +3,7 @@
 ## 目标
 
 Python runtime 的分发方式与从零重建流程。
-开发环境搭建见 [DEVELOPMENT.md](D:/projects/plotkitycat/DEVELOPMENT.md)。
+开发环境搭建见 [DEVELOPMENT.md](./DEVELOPMENT.md)。
 
 当前 runtime 仅使用原生 Python 包内容，不再注入 Matplotlib C++ fastpath 补丁。
 
@@ -26,7 +26,7 @@ Python runtime 的分发方式与从零重建流程。
 
 1. 将本地 `resources/runtime/runtime.7z` 上传为 GitHub Release asset
 2. 接手者将文件放回 `resources/runtime/runtime.7z`
-3. 接手者参照 [UPDATE_RELEASE.md](D:/projects/plotkitycat/UPDATE_RELEASE.md) 执行构建与打包
+3. 接手者参照 [UPDATE_RELEASE.md](./UPDATE_RELEASE.md) 执行构建与打包
 
 ## 从零重建 runtime
 

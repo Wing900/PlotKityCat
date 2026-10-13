@@ -1,7 +1,7 @@
 # PlotKityCat 更新发布说明
 
-应用发布与在线更新流程。runtime 重建见 [RUNTIME_BUILD.md](D:/projects/plotkitycat/RUNTIME_BUILD.md)。
-本地开发环境准备见 [DEVELOPMENT.md](D:/projects/plotkitycat/DEVELOPMENT.md)。
+应用发布与在线更新流程。runtime 重建见 [RUNTIME_BUILD.md](./RUNTIME_BUILD.md)。
+本地开发环境准备见 [DEVELOPMENT.md](./DEVELOPMENT.md)。
 
 当前发布模型：
 
@@ -25,13 +25,13 @@ runtime 约定：
 
 - `resources/runtime/runtime.7z` 作为 release asset 外部分发
 - 当前使用的资产名是 `runtime.7z`
-- 从零重建流程见 [RUNTIME_BUILD.md](D:/projects/plotkitycat/RUNTIME_BUILD.md)
+- 从零重建流程见 [RUNTIME_BUILD.md](./RUNTIME_BUILD.md)
 
 ## 1. 先改版本号
 
 编辑：
 
-- [version.json](/D:/projects/PlotKityCat/version.json)
+- [version.json](./version.json)
 
 把 `appVersion` 改成要发布的版本，例如：
 
@@ -63,7 +63,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\build-versioned-app.ps1 -Versio
 
 产物：
 
-- [build/bin/PlotKityCat.exe](/D:/projects/PlotKityCat/build/bin/PlotKityCat.exe)
+- `build/bin/PlotKityCat.exe`
 - `build/bin/build-metadata.json`
 
 后续发布脚本会核对 `build-metadata.json` 与目标版本；版本不一致时直接终止，防止旧 EXE 被包装成新版本。
@@ -84,7 +84,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\prepare-update-release.ps1 -Ver
 
 产物目录：
 
-- [build/update](/D:/projects/PlotKityCat/build/update)
+- `build/update`
 
 对应版本目录里会生成：
 
@@ -122,7 +122,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\package-release.ps1 -Version 0.
 - 这个 zip 还会包含 `resources/screeningzoom/zoomit.exe`
 - 因此发布完整包前，必须先在本地准备好 `resources/runtime/runtime.7z`
 - 并且必须准备好 `zoomit.exe`；推荐固定放在 `resources/screeningzoom/zoomit.exe`
-- 当前推荐先按 [RUNTIME_BUILD.md](/D:/projects/plotkitycat/RUNTIME_BUILD.md:1) 用裁剪开关重建 runtime，再执行完整打包
+- 当前推荐先按 [RUNTIME_BUILD.md](./RUNTIME_BUILD.md) 用裁剪开关重建 runtime，再执行完整打包
 - 在线更新仍只替换 EXE；新增或调整 `Scripts/`、Runtime、ScreeningZoom 时，必须同步发布完整 zip
 
 `package-release.ps1` 对 `zoomit.exe` 的查找顺序固定为：
@@ -181,7 +181,7 @@ curl.exe -I https://update.5051001.xyz/plotkitycat/releases/PlotKityCat-0.0.3.1-
 
 仅记录最短发布顺序：
 
-1. 改 [version.json](/D:/projects/PlotKityCat/version.json) 的 `appVersion`
+1. 改 [version.json](./version.json) 的 `appVersion`
 2. 执行 `.\tools\build-versioned-app.ps1`
 3. 执行 `.\tools\prepare-update-release.ps1`
 4. 执行 `.\tools\package-release.ps1`
@@ -223,7 +223,7 @@ Updater 修复会从安装了新 Updater 的版本开始生效。旧版本升级
 
 ### Q1. 不传 `-Version` 会怎样？
 
-会自动读取 [version.json](/D:/projects/PlotKityCat/version.json) 里的 `appVersion`。
+会自动读取 [version.json](./version.json) 里的 `appVersion`。
 
 ### Q2. 用户点“检查更新”实际读哪里？
 

@@ -64,7 +64,7 @@ wails dev
 
 `runtime.version.json` 必须填写真实版本，`pending` 仅为占位值。
 
-从零重建 runtime 的完整说明见 [RUNTIME_BUILD.md](D:/projects/plotkitycat/RUNTIME_BUILD.md)。
+从零重建 runtime 的完整说明见 [RUNTIME_BUILD.md](./RUNTIME_BUILD.md)。
 
 ## 构建与打包
 
@@ -135,4 +135,4 @@ wails dev
 - `build/update/`
 - `packaging/`
 
-发布服务器更新步骤见 [UPDATE_RELEASE.md](D:/projects/plotkitycat/UPDATE_RELEASE.md)。
+发布服务器更新步骤见 [UPDATE_RELEASE.md](./UPDATE_RELEASE.md)。
