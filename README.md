@@ -40,7 +40,7 @@
 <br>
 
 <p>
-  <img src="https://img.shields.io/badge/Release-v0.0.5.0-6B5446?style=for-the-badge" alt="Release v0.0.5.0" />
+  <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fupdate.5051001.xyz%2Fplotkitycat%2Fstable%2Fmanifest.json&query=%24.version&label=Release&color=6B5446&style=for-the-badge" alt="Release" />
   <img src="https://img.shields.io/badge/Windows-AMD64-6B5446?style=for-the-badge&logo=windows&logoColor=white" alt="Windows AMD64" />
   <img src="https://img.shields.io/badge/AI-Native-6B5446?style=for-the-badge&logo=openai&logoColor=white" alt="AI Native" />
   <img src="https://img.shields.io/badge/License-GPL--3.0-8B7364?style=for-the-badge" alt="GPL-3.0" />
@@ -49,7 +49,7 @@
 <p>
   <img src="https://img.shields.io/badge/Wails-v2-8B7364?style=for-the-badge&logo=go&logoColor=white" alt="Wails v2" />
   <img src="https://img.shields.io/badge/Vue-3-8B7364?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue 3" />
-  <img src="https://img.shields.io/badge/Python-3.13+-8B7364?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.13+" />
+  <img src="https://img.shields.io/badge/Python-8B7364?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
 </p>
 
 <p>
@@ -61,7 +61,7 @@
   &nbsp;•&nbsp;
   <a href="#快速开始"><strong>快速开始</strong></a>
   &nbsp;•&nbsp;
-  <a href="#文档"><strong>开发文档</strong></a>
+  <a href="#文档"><strong>文档</strong></a>
 </p>
 
 <br>
@@ -78,7 +78,11 @@ PlotKityCat 为初高中数学教学提供自然语言驱动的可视化工作�
 
 ## 视频介绍
 
-https://github.com/user-attachments/assets/ff90ac18-5fcf-42d4-85f3-be09b3309ed4
+<a href="https://tour.5051001.xyz/media/plotkitycat-promo-v2.mp4">
+  <img src="https://tour.5051001.xyz/media/plotkitycat-promo-v2-cover.webp" width="720" alt="PlotKityCat 宣传片 · 01:55" />
+</a>
+
+▶ [播放 1:55 宣传片](https://tour.5051001.xyz/media/plotkitycat-promo-v2.mp4) &nbsp;·&nbsp; [使用教程与文档站](https://tour.5051001.xyz/)
 
 ## 功能
 
@@ -101,7 +105,7 @@ https://github.com/user-attachments/assets/ff90ac18-5fcf-42d4-85f3-be09b3309ed4
 - Markdown 支持 LaTeX 数学公式。
 - 支持多个工作区和场景的创建、切换、重命名与组织。
 - 支持仅笔记、仅代码和组合视图等 Layout Mode。
-- 支持 `.pkcw` 工作区包导入与导出。
+- 支持 `.pkcw` 工作区包导入与导出，用于备份、交换与迁移教学素材。
 
 ### Design Card
 
@@ -109,54 +113,44 @@ https://github.com/user-attachments/assets/ff90ac18-5fcf-42d4-85f3-be09b3309ed4
 - 支持继续优化生成结果。
 - 保留设计版本，方便比较与回退到所需方案。
 
-### 首次上手
+### 上手与便携运行
 
-- 新用户首次启动时进入新手教程。
-- 教程基于随应用发布的预制工作区。
-- 引导覆盖主要区域、常用交互和基础生成流程。
-
-### 便携运行与更新
-
+- 新用户首次启动时进入新手教程，教程基于随应用发布的预制工作区，引导覆盖主要区域、常用交互和基础生成流程。
 - 完整包包含 WinPython Runtime、Matplotlib、NumPy、SciPy 和 PyQt5。
 - 支持 U 盘与免安装目录运行。
-- 设置页支持检查更新、下载更新与重启安装。
-- 更新文件执行 Size 与 SHA256 完整性校验。
+- 设置页支持检查更新、下载更新与重启安装；更新文件执行 Size 与 SHA256 完整性校验。
 - 集成 ScreeningZoom，辅助课堂放映与局部讲解。
 
 ## 下载 Windows 版
 
-### 全新安装
+当前发布目标为 **Windows AMD64**。最新版本号见顶部 Release 徽章，它直接读取更新服务器的发布清单，无需改 README。
 
-适合第一次使用，包含应用、Runtime、预制工作区和放映组件。
+### 安装版（推荐）
 
-**[下载 PlotKityCat v0.0.5.0 完整包](https://1820614751.cdn.123clouddisk.com/1820614751/44761845?v=332b4a2982f63f1e0a65285928ed58f6)**
+适合第一次使用。安装包内含应用、Runtime、预制工作区与放映组件。
 
-文件名：
+**[下载 PlotKityCat 安装包](https://update.5051001.xyz/plotkitycat/download/PlotKityCat-Setup.exe)**
 
-```text
-PlotKityCat-v0.0.5.0.zip
-```
+打开安装包，选择安装位置，点击安装。安装过程会准备运行时，首次启动较慢，之后从桌面快捷方式打开即可。
+
+### 免安装版
+
+适合放入 U 盘或在教室电脑上随用随走，解压后直接运行。
+
+**[前往 Releases 下载免安装完整包](https://github.com/Wing900/PlotKityCat/releases/latest)**
+
+文件名形如 `PlotKityCat-版本号-windows-amd64.zip`。
 
 ### 已有完整环境
 
-适合已经安装过完整包、只需要替换应用文件的用户。
+已经装过完整包、只需替换应用文件的用户，下载 `PlotKityCat-版本号-windows-amd64.exe` 覆盖即可；也可以在应用设置里直接检查更新。
 
-**[下载 PlotKityCat v0.0.5.0 增量包](https://1820614751.cdn.123clouddisk.com/1820614751/44686802?v=6520da4b1fffa08ad1800deb574343ce)**
-
-文件名：
-
-```text
-PlotKityCat-0.0.5.0-windows-amd64.zip
-```
-
-已安装用户后续可以在设置中直接检查更新。
-
-> 当前发布目标为 Windows AMD64。macOS 与 Linux 安装包暂未提供。
+> 更新清单：`https://update.5051001.xyz/plotkitycat/stable/manifest.json`（含文件大小与 SHA256，客户端下载时会校验）。
 
 ## 快速开始
 
-1. 下载并解压完整包。
-2. 运行 `PlotKityCat.exe`。
+1. 下载并运行安装包。
+2. 从桌面快捷方式打开 PlotKityCat。
 3. 跟随新手教程熟悉工作区。
 4. 描述希望生成的数学图像。
 5. 在代码区、笔记区和可视化区域继续调整结果。
@@ -175,21 +169,6 @@ PlotKityCat-0.0.5.0-windows-amd64.zip
 ```
 
 在 AI 设置中可以切换到 Custom Mode，并填写兼容 OpenAI Chat Completions 协议的服务地址。
-
-## 一个工作区里有什么
-
-```text
-工作区
-├─ 场景 A
-│  ├─ main.py       # Matplotlib 代码
-│  └─ note.md       # Markdown / LaTeX 教学笔记
-├─ 场景 B
-│  ├─ main.py
-│  └─ note.md
-└─ .plotkitycat-scenes.json
-```
-
-多个工作区可以打包为 `.pkcw` 文件，用于备份、交换与迁移教学素材。
 
 ## 开发初衷
 
@@ -222,10 +201,12 @@ PlotKityCat 源于我开发 GGBPuppy 时的一次受挫。
 | Desktop Shell | Wails v2 |
 | Frontend | Vue 3、TypeScript、Vite、CodeMirror |
 | Backend | Go |
-| Visualization | Python 3.13、Matplotlib、NumPy、SciPy |
+| Visualization | Python、Matplotlib、NumPy、SciPy |
 | Interactive Runtime | WinPython、PyQt5 |
 | Notes | Markdown、MathJax / LaTeX |
 | AI | OpenAI-compatible API |
+
+具体版本以仓库的 `go.mod`、`frontend/package.json` 与 `version.json` 为准。
 
 ## 本地开发
 
@@ -267,9 +248,11 @@ wails dev
 
 ## 文档
 
+- [使用教程与文档站](https://tour.5051001.xyz/)
 - [开发与构建](./DEVELOPMENT.md)
 - [Runtime 分发与重建](./RUNTIME_BUILD.md)
 - [在线更新与发布](./UPDATE_RELEASE.md)
+- [本地发布指南](./LOCAL_RELEASE_GUIDE.md)
 
 ## 致谢
 
