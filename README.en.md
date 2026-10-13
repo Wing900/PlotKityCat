@@ -40,7 +40,7 @@
 <br>
 
 <p>
-  <img src="https://img.shields.io/badge/Release-v0.0.5.0-6B5446?style=for-the-badge" alt="Release v0.0.5.0" />
+  <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fupdate.5051001.xyz%2Fplotkitycat%2Fstable%2Fmanifest.json&query=%24.version&label=Release&color=6B5446&style=for-the-badge" alt="Release" />
   <img src="https://img.shields.io/badge/Windows-AMD64-6B5446?style=for-the-badge&logo=windows&logoColor=white" alt="Windows AMD64" />
   <img src="https://img.shields.io/badge/AI-Native-6B5446?style=for-the-badge&logo=openai&logoColor=white" alt="AI Native" />
   <img src="https://img.shields.io/badge/License-GPL--3.0-8B7364?style=for-the-badge" alt="GPL-3.0" />
@@ -49,7 +49,7 @@
 <p>
   <img src="https://img.shields.io/badge/Wails-v2-8B7364?style=for-the-badge&logo=go&logoColor=white" alt="Wails v2" />
   <img src="https://img.shields.io/badge/Vue-3-8B7364?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue 3" />
-  <img src="https://img.shields.io/badge/Python-3.13+-8B7364?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.13+" />
+  <img src="https://img.shields.io/badge/Python-8B7364?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
 </p>
 
 <p>
@@ -78,7 +78,9 @@ The application ships with an independent WinPython Runtime, making it suitable 
 
 ## Video
 
-https://github.com/user-attachments/assets/ff90ac18-5fcf-42d4-85f3-be09b3309ed4
+https://github.com/user-attachments/assets/ed873a81-34a9-4812-a881-01a16ca1c3d0
+
+▶ 1:55 &nbsp;·&nbsp; [High-quality version (1080p)](https://tour.5051001.xyz/media/plotkitycat-promo-v2.mp4) &nbsp;·&nbsp; [Tutorial and documentation site](https://tour.5051001.xyz/)
 
 ## Features
 
@@ -101,7 +103,7 @@ https://github.com/user-attachments/assets/ff90ac18-5fcf-42d4-85f3-be09b3309ed4
 - Render LaTeX mathematics inside Markdown notes.
 - Create, switch, rename, and organize multiple workspaces and scenes.
 - Switch between note-only, code-only, and combined Layout Modes.
-- Import and export `.pkcw` workspace packages.
+- Import and export `.pkcw` workspace packages for backup, exchange, and migration.
 
 ### Design Card
 
@@ -109,54 +111,44 @@ https://github.com/user-attachments/assets/ff90ac18-5fcf-42d4-85f3-be09b3309ed4
 - Refine a generated card with further instructions.
 - Keep design versions for comparison and retrieval.
 
-### First-run guidance
+### Onboarding and portable runtime
 
-- Guide new users through the main workflow on first launch.
-- Use a bundled onboarding workspace as the tutorial environment.
-- Cover the main regions, essential interactions, and the basic generation flow.
-
-### Portable runtime and updates
-
+- Guide new users through the main workflow on first launch, using a bundled onboarding workspace that covers the main regions, essential interactions, and the basic generation flow.
 - Ship a complete package with WinPython Runtime, Matplotlib, NumPy, SciPy, and PyQt5.
 - Run from a USB drive or an extracted portable directory.
-- Check for updates, download them, and restart to install from Settings.
-- Verify update files with both Size and SHA256 checks.
+- Check for updates, download them, and restart to install from Settings; update files are verified with both Size and SHA256 checks.
 - Integrate ScreeningZoom for classroom presentation and focused explanation.
 
 ## Downloads for Windows
 
-### Full package
+The current release target is **Windows AMD64**. The latest version number is shown by the Release badge above, which reads the release manifest from the update server directly, so this README never needs editing for a new version.
 
-Recommended for first-time users. It includes the application, Runtime, bundled workspaces, and presentation component.
+### Installer (recommended)
 
-**[Download PlotKityCat v0.0.5.0 full package](https://1820614751.cdn.123clouddisk.com/1820614751/44761845?v=332b4a2982f63f1e0a65285928ed58f6)**
+Recommended for first-time users. The installer includes the application, Runtime, bundled workspace, and presentation component.
 
-File:
+**[Download the PlotKityCat installer](https://update.5051001.xyz/plotkitycat/download/PlotKityCat-Setup.exe)**
 
-```text
-PlotKityCat-v0.0.5.0.zip
-```
+Open the installer, choose an installation location, and click Install. The runtime is prepared during installation, so the first launch is slower; afterwards, start PlotKityCat from the desktop shortcut.
 
-### Application-only package
+### Portable build
 
-For users who already have a complete PlotKityCat environment and only need to replace the application executable.
+For a USB drive or a classroom machine you can walk up to and run from: extract and go.
 
-**[Download PlotKityCat v0.0.5.0 application-only package](https://1820614751.cdn.123clouddisk.com/1820614751/44686802?v=6520da4b1fffa08ad1800deb574343ce)**
+**[Get the portable full package from Releases](https://github.com/Wing900/PlotKityCat/releases/latest)**
 
-File:
+The file name looks like `PlotKityCat-<version>-windows-amd64.zip`.
 
-```text
-PlotKityCat-0.0.5.0-windows-amd64.zip
-```
+### Existing installation
 
-Existing users can check for later updates directly from Settings.
+If you already have a complete PlotKityCat environment and only need to replace the executable, download `PlotKityCat-<version>-windows-amd64.exe`, or use Check for updates in Settings.
 
-> The current release target is Windows AMD64. macOS and Linux packages are not available yet.
+> Update manifest: `https://update.5051001.xyz/plotkitycat/stable/manifest.json` (contains file size and SHA256, both verified by the client during download).
 
 ## Quick Start
 
-1. Download and extract the full package.
-2. Run `PlotKityCat.exe`.
+1. Download and run the installer.
+2. Open PlotKityCat from the desktop shortcut.
 3. Follow the onboarding tour to learn the workspace.
 4. Describe the mathematical visual you want to generate.
 5. Continue refining the result in the code, note, and visualization regions.
@@ -175,21 +167,6 @@ Existing users can check for later updates directly from Settings.
 ```
 
 In AI Settings, switch to Custom Mode and enter a service endpoint compatible with the OpenAI Chat Completions protocol.
-
-## What is inside a workspace?
-
-```text
-Workspace
-├─ Scene A
-│  ├─ main.py       # Matplotlib code
-│  └─ note.md       # Markdown / LaTeX teaching notes
-├─ Scene B
-│  ├─ main.py
-│  └─ note.md
-└─ .plotkitycat-scenes.json
-```
-
-Multiple workspaces can be packaged into a `.pkcw` file for backup, exchange, and migration.
 
 ## Why I built it
 
@@ -222,10 +199,12 @@ Three principles guide the project:
 | Desktop Shell | Wails v2 |
 | Frontend | Vue 3, TypeScript, Vite, CodeMirror |
 | Backend | Go |
-| Visualization | Python 3.13, Matplotlib, NumPy, SciPy |
+| Visualization | Python, Matplotlib, NumPy, SciPy |
 | Interactive Runtime | WinPython, PyQt5 |
 | Notes | Markdown, MathJax / LaTeX |
 | AI | OpenAI-compatible API |
+
+Exact versions live in `go.mod`, `frontend/package.json`, and `version.json`.
 
 ## Local Development
 
@@ -267,9 +246,11 @@ For versioning, the update server, and the complete release flow, see [UPDATE_RE
 
 ## Documentation
 
+- [Tutorial and documentation site](https://tour.5051001.xyz/)
 - [Development and build](./DEVELOPMENT.md)
 - [Runtime distribution and rebuild](./RUNTIME_BUILD.md)
 - [Online updates and releases](./UPDATE_RELEASE.md)
+- [Local release guide](./LOCAL_RELEASE_GUIDE.md)
 
 ## Acknowledgements
 

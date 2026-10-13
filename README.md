@@ -78,11 +78,9 @@ PlotKityCat 为初高中数学教学提供自然语言驱动的可视化工作�
 
 ## 视频介绍
 
-<a href="https://tour.5051001.xyz/media/plotkitycat-promo-v2.mp4">
-  <img src="https://tour.5051001.xyz/media/plotkitycat-promo-v2-cover.webp" width="720" alt="PlotKityCat 宣传片 · 01:55" />
-</a>
+https://github.com/user-attachments/assets/ed873a81-34a9-4812-a881-01a16ca1c3d0
 
-▶ [播放 1:55 宣传片](https://tour.5051001.xyz/media/plotkitycat-promo-v2.mp4) &nbsp;·&nbsp; [使用教程与文档站](https://tour.5051001.xyz/)
+▶ 1:55 &nbsp;·&nbsp; [高清版（1080p）](https://tour.5051001.xyz/media/plotkitycat-promo-v2.mp4) &nbsp;·&nbsp; [使用教程与文档站](https://tour.5051001.xyz/)
 
 ## 功能
 
