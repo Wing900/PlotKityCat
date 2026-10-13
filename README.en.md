@@ -80,7 +80,7 @@ The application ships with an independent WinPython Runtime, making it suitable 
 
 https://github.com/user-attachments/assets/ed873a81-34a9-4812-a881-01a16ca1c3d0
 
-▶ 1:55 &nbsp;·&nbsp; [High-quality version (1080p)](https://tour.5051001.xyz/media/plotkitycat-promo-v2.mp4) &nbsp;·&nbsp; [Tutorial and documentation site](https://tour.5051001.xyz/)
+▶ 1:55 &nbsp;·&nbsp; [Tutorial and documentation site](https://tour.5051001.xyz/)
 
 ## Features
 
