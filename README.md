@@ -80,7 +80,7 @@ PlotKityCat 为初高中数学教学提供自然语言驱动的可视化工作�
 
 https://github.com/user-attachments/assets/ed873a81-34a9-4812-a881-01a16ca1c3d0
 
-▶ 1:55 &nbsp;·&nbsp; [使用教程与文档站](https://tour.5051001.xyz/)
+[使用教程与文档站](https://tour.5051001.xyz/)
 
 ## 功能
 
